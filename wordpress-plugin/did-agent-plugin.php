@@ -105,6 +105,14 @@ class DIDAgentPlugin {
                             if (typeof url === "string" && url.indexOf("api.d-id.com") !== -1) {
                                 const newUrl = url.replace("https://api.d-id.com", window.didAgentConfig.backendUrl + "/api");
                                 console.log("Redirecting D-ID API call: " + url + " -> " + newUrl);
+                                
+                                // Add client key to all D-ID API requests
+                                if (window.didAgentConfig.clientKey) {
+                                    options.headers = options.headers || {};
+                                    options.headers['Authorization'] = 'Client-Key ' + window.didAgentConfig.clientKey;
+                                    console.log("Added client key to request:", options.headers['Authorization']);
+                                }
+                                
                                 return originalFetch(newUrl, options);
                             }
                             return originalFetch(url, options);
@@ -205,7 +213,13 @@ class DIDAgentPlugin {
                             
                             const data = await response.json();
                             console.log("Backend response data:", data);
-                            return data.client_key || data.clientKey || data.key || data.token;
+                            const clientKey = data.client_key || data.clientKey || data.key || data.token;
+                            
+                            // Store client key globally for fetch interceptor
+                            window.didAgentConfig.clientKey = clientKey;
+                            console.log("Stored client key globally:", clientKey);
+                            
+                            return clientKey;
                             
                         } catch (error) {
                             console.error("Error getting client key:", error);
