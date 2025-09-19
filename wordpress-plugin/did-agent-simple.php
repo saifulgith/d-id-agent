@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: D-ID Agent Simple
- * Description: Simple D-ID Agent integration using SDK's built-in professional interface
+ * Description: Simple D-ID Agent integration that lets the SDK handle everything
  * Version: 1.0.0
  * Author: Your Name
  */
@@ -26,17 +26,22 @@ class DIDAgentSimple {
     }
     
     public function enqueue_scripts() {
-        // Load D-ID SDK
-        wp_enqueue_script(
-            'did-sdk',
-            'https://cdn.jsdelivr.net/npm/@d-id/client-sdk@latest/dist/index.js',
-            array(),
-            '1.0.0',
-            true
-        );
-        
-        // Add inline script for D-ID SDK configuration
-        wp_add_inline_script('did-sdk', '
+        // Load D-ID SDK directly as ES module
+        wp_add_inline_script('jquery', '
+            // Load D-ID SDK as ES module
+            const script = document.createElement("script");
+            script.type = "module";
+            script.innerHTML = `
+                import * as sdk from "https://cdn.jsdelivr.net/npm/@d-id/client-sdk@latest/dist/index.js";
+                
+                // Make SDK available globally
+                window.createAgentManager = sdk.createAgentManager;
+                window.StreamType = sdk.StreamType;
+                
+                console.log("✅ D-ID SDK loaded as ES module");
+            `;
+            document.head.appendChild(script);
+            
             // Configure D-ID SDK
             window.didAgentConfig = {
                 backendUrl: "' . esc_js($this->backend_url) . '",
@@ -44,7 +49,7 @@ class DIDAgentSimple {
                 nonce: "' . wp_create_nonce('did_agent_nonce') . '"
             };
             
-            console.log("🎯 D-ID Agent Simple - Professional Interface Ready");
+            console.log("🎯 D-ID Agent Simple - Let SDK Handle Everything");
         ');
     }
     
@@ -69,8 +74,8 @@ class DIDAgentSimple {
         
         ob_start();
         ?>
-        <div id="did-agent-<?php echo $agent_id; ?>" 
-             style="width: <?php echo $width; ?>; height: <?php echo $height; ?>; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);">
+        <div id="did-agent-simple-<?php echo $agent_id; ?>" 
+             style="width: <?php echo $width; ?>; height: <?php echo $height; ?>; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12); position: relative;">
             
             <!-- Loading State -->
             <div id="loading-<?php echo $agent_id; ?>" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
@@ -83,9 +88,9 @@ class DIDAgentSimple {
                 <p style="margin: 0;">Failed to connect to AI Agent. Please try again later.</p>
             </div>
             
-            <!-- D-ID SDK will create its professional interface here -->
-            <div id="sdk-container-<?php echo $agent_id; ?>" style="display: none; width: 100%; height: 100%;">
-                <!-- D-ID SDK professional interface will be injected here -->
+            <!-- D-ID SDK will create its own interface here -->
+            <div id="sdk-container-<?php echo $agent_id; ?>" style="width: 100%; height: 100%; position: relative;">
+                <!-- D-ID SDK will inject its professional interface here -->
             </div>
         </div>
         
@@ -99,23 +104,23 @@ class DIDAgentSimple {
         <script>
         (async function() {
             const agentId = '<?php echo $agent_id; ?>';
-            const container = document.getElementById('did-agent-' + agentId);
+            const container = document.getElementById('did-agent-simple-' + agentId);
             const loadingDiv = document.getElementById('loading-' + agentId);
             const errorDiv = document.getElementById('error-' + agentId);
             const sdkContainer = document.getElementById('sdk-container-' + agentId);
             
             try {
-                console.log('🚀 Initializing D-ID Agent with professional interface:', agentId);
+                console.log('🚀 Initializing D-ID Agent Simple:', agentId);
                 
                 // Wait for D-ID SDK to load
                 let retries = 0;
-                while (typeof window.createAgentManager === 'undefined' && retries < 20) {
-                    await new Promise(resolve => setTimeout(resolve, 250));
+                while (typeof window.createAgentManager === 'undefined' && retries < 30) {
+                    await new Promise(resolve => setTimeout(resolve, 200));
                     retries++;
                 }
                 
                 if (typeof window.createAgentManager === 'undefined') {
-                    throw new Error('D-ID SDK not loaded');
+                    throw new Error('D-ID SDK not loaded after 30 retries');
                 }
                 
                 console.log('✅ D-ID SDK loaded successfully');
@@ -174,66 +179,41 @@ class DIDAgentSimple {
                     return new originalWebSocket(url, protocols);
                 };
                 
-                // Create agent with D-ID SDK's professional interface
-                console.log('🎨 Creating D-ID agent with professional interface...');
+                // Create agent with minimal configuration - let SDK handle everything
+                console.log('🎨 Creating D-ID agent with minimal configuration...');
                 
                 const auth = { type: 'key', clientKey: clientKey };
                 
+                // Minimal callbacks - let SDK handle UI
                 const callbacks = {
-                    onSrcObjectReady: (value) => {
-                        console.log('📹 Video stream ready');
-                        return value;
-                    },
-                    onVideoStateChange: (state) => {
-                        console.log('📹 Video state:', state);
-                    },
                     onConnectionStateChange: (state) => {
                         console.log('🔗 Connection state:', state);
                         if (state === 'connected') {
                             console.log('✅ Agent connected successfully!');
+                            // Hide loading
+                            loadingDiv.style.display = 'none';
                         }
                     },
-                    onAgentError: (error) => {
-                        console.error('❌ Agent error:', error);
-                        showError('Agent Error: ' + (error.description || error.message));
-                    },
-                    onUserSpeaking: (isSpeaking) => {
-                        console.log('👤 User speaking:', isSpeaking);
-                    },
-                    onAgentSpeaking: (isSpeaking) => {
-                        console.log('🤖 Agent speaking:', isSpeaking);
-                    },
-                    onChatStream: (chatEvent) => {
-                        console.log('💬 Chat stream:', chatEvent);
+                    onError: (error, errorData) => {
+                        console.error('❌ Agent error:', error, errorData);
+                        showError('Agent Error: ' + (error.description || error.message || JSON.stringify(error)));
                     }
                 };
                 
-                const streamOptions = {
-                    compatibilityMode: 'auto',
-                    streamWarmup: true,
-                    fluent: true
-                };
+                // Create agent manager with minimal options - let SDK handle everything
+                console.log('🎨 Creating agent manager with minimal options...');
                 
-                // Let D-ID SDK create its professional interface
                 const agentManager = await window.createAgentManager(agentId, {
                     auth,
                     callbacks,
-                    streamOptions,
-                    container: sdkContainer  // D-ID SDK will create its professional UI here
+                    container: sdkContainer  // Let SDK create its own UI
                 });
+                
+                console.log('✅ Agent manager created successfully');
                 
                 await agentManager.connect();
                 
-                // Hide loading and show SDK interface
-                loadingDiv.style.display = 'none';
-                sdkContainer.style.display = 'block';
-                
-                console.log('🎉 D-ID Agent with professional interface is ready!');
-                
-                // Send test message
-                setTimeout(() => {
-                    agentManager.chat('Hello! Can you introduce yourself?');
-                }, 2000);
+                console.log('🎉 D-ID Agent Simple is ready!');
                 
             } catch (error) {
                 console.error('❌ Failed to initialize agent:', error);
@@ -287,10 +267,18 @@ class DIDAgentSimple {
             </form>
             
             <h2>Usage</h2>
-            <p>Use the shortcode <code>[did_agent_simple agent_id="your_agent_id"]</code> to display the D-ID agent with professional interface.</p>
+            <p>Use the shortcode <code>[did_agent_simple agent_id="your_agent_id"]</code> to display the D-ID agent.</p>
             
             <h3>Example</h3>
             <code>[did_agent_simple agent_id="v2_agt_aKkqeO6X" width="800px" height="600px"]</code>
+            
+            <h2>Features</h2>
+            <ul>
+                <li>✅ Minimal configuration</li>
+                <li>✅ Let D-ID SDK handle everything</li>
+                <li>✅ No custom UI interference</li>
+                <li>✅ Simple and clean</li>
+            </ul>
         </div>
         <?php
     }
