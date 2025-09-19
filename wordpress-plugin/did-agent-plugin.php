@@ -274,6 +274,15 @@ class DIDAgentPlugin {
                         await agentManager.connect();
                         
                         this.setupEventListeners(container, elements, agentManager, agentId);
+                        
+                        // Debug: Check what elements are available
+                        console.log("Container HTML:", container.innerHTML);
+                        console.log("Available elements:", {
+                            loading: container.querySelector(".did-agent-loading"),
+                            interface: container.querySelector(".did-agent-interface"),
+                            error: container.querySelector(".did-agent-error")
+                        });
+                        
                         this.hideLoading(container);
                         this.showInterface(container);
                         
@@ -388,11 +397,25 @@ class DIDAgentPlugin {
                     }
                     
                     hideLoading(container) {
-                        container.querySelector(".did-agent-loading").style.display = "none";
+                        const loadingElement = container.querySelector(".did-agent-loading");
+                        console.log("HideLoading called, loading element found:", loadingElement);
+                        if (loadingElement) {
+                            loadingElement.style.display = "none";
+                            console.log("Loading hidden successfully");
+                        } else {
+                            console.error("Loading element not found!");
+                        }
                     }
                     
                     showInterface(container) {
-                        container.querySelector(".did-agent-interface").style.display = "block";
+                        const interfaceElement = container.querySelector(".did-agent-interface");
+                        console.log("ShowInterface called, interface element found:", interfaceElement);
+                        if (interfaceElement) {
+                            interfaceElement.style.display = "block";
+                            console.log("Interface displayed successfully");
+                        } else {
+                            console.error("Interface element not found!");
+                        }
                     }
                     
                     showError(container, message) {
