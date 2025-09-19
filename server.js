@@ -337,6 +337,7 @@ app.use('/api/agents/:agentId/*', async (req, res) => {
       // For WebRTC signaling (SDP, ICE), keep the client key from frontend
       authHeader = req.headers.authorization;
       console.log(`🔑 Using client key for signaling route: ${subPath}`);
+      console.log(`🔑 Client key value:`, authHeader);
     } else {
       // For management endpoints, use server API key
       const authString = Buffer.from(DID_API_KEY).toString('base64');
