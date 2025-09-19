@@ -90,7 +90,7 @@ app.post('/api/client-key', async (req, res) => {
     
     // Create a proper D-ID client key with WebSocket capabilities
     const requestBody = {
-      allowed_origins: req.body.allowed_origins || [process.env.FRONTEND_ORIGIN || '*'],
+          allowed_domains: req.body.allowed_domains || [process.env.FRONTEND_ORIGIN || '*'],
       expires_in: req.body.expires_in || 3600,
       capabilities: ['streaming', 'ws'] // Enable WebSocket and streaming capabilities
     };
@@ -117,11 +117,11 @@ app.post('/api/client-key', async (req, res) => {
     
     // Fallback to using server API key if D-ID client key creation fails
     console.log('🔄 Falling back to server API key...');
-    const tempClientKey = {
-      client_key: DID_API_KEY,
-      expires_in: 3600,
-      allowed_origins: req.body.allowed_origins || [process.env.FRONTEND_ORIGIN || '*']
-    };
+        const tempClientKey = {
+          client_key: DID_API_KEY,
+          expires_in: 3600,
+          allowed_domains: req.body.allowed_domains || [process.env.FRONTEND_ORIGIN || '*']
+        };
     
     res.json(tempClientKey);
   }
@@ -134,7 +134,7 @@ app.post('/client-key', async (req, res) => {
     
     // Create a proper D-ID client key with WebSocket capabilities
     const requestBody = {
-      allowed_origins: req.body.allowed_origins || [process.env.FRONTEND_ORIGIN || '*'],
+          allowed_domains: req.body.allowed_domains || [process.env.FRONTEND_ORIGIN || '*'],
       expires_in: req.body.expires_in || 3600,
       capabilities: ['streaming', 'ws'] // Enable WebSocket and streaming capabilities
     };
@@ -161,11 +161,11 @@ app.post('/client-key', async (req, res) => {
     
     // Fallback to using server API key if D-ID client key creation fails
     console.log('🔄 Falling back to server API key...');
-    const tempClientKey = {
-      client_key: DID_API_KEY,
-      expires_in: 3600,
-      allowed_origins: req.body.allowed_origins || [process.env.FRONTEND_ORIGIN || '*']
-    };
+        const tempClientKey = {
+          client_key: DID_API_KEY,
+          expires_in: 3600,
+          allowed_domains: req.body.allowed_domains || [process.env.FRONTEND_ORIGIN || '*']
+        };
     
     res.json(tempClientKey);
   }
