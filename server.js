@@ -120,11 +120,12 @@ app.post('/api/client-key', async (req, res) => {
     console.log('⚠️  Note: Using server API key directly - this may not work with D-ID SDK');
     
     // The D-ID SDK expects a client key, but we'll use the server key
-    // This might not work for streaming/WebSocket operations
+    // Format it as a proper client key that the SDK can use
     const tempClientKey = {
       client_key: DID_API_KEY,
       expires_in: 3600,
-      allowed_domains: req.body.allowed_domains || [process.env.FRONTEND_ORIGIN || '*']
+      allowed_domains: req.body.allowed_domains || [process.env.FRONTEND_ORIGIN || '*'],
+      capabilities: ['streaming', 'ws'] // Add capabilities that the SDK expects
     };
     
     res.json(tempClientKey);
@@ -168,11 +169,12 @@ app.post('/client-key', async (req, res) => {
     console.log('⚠️  Note: Using server API key directly - this may not work with D-ID SDK');
     
     // The D-ID SDK expects a client key, but we'll use the server key
-    // This might not work for streaming/WebSocket operations
+    // Format it as a proper client key that the SDK can use
     const tempClientKey = {
       client_key: DID_API_KEY,
       expires_in: 3600,
-      allowed_domains: req.body.allowed_domains || [process.env.FRONTEND_ORIGIN || '*']
+      allowed_domains: req.body.allowed_domains || [process.env.FRONTEND_ORIGIN || '*'],
+      capabilities: ['streaming', 'ws'] // Add capabilities that the SDK expects
     };
     
     res.json(tempClientKey);
