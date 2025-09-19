@@ -326,6 +326,7 @@ app.post('/api/agents/:agentId/streams/:streamId/sdp', async (req, res) => {
   try {
     const { agentId, streamId } = req.params;
     console.log(`🎥 SDP exchange for agent: ${agentId}, stream: ${streamId}`);
+    console.log(`🎥 SDP request body:`, JSON.stringify(req.body, null, 2));
     
     // Use server API key for SDP - D-ID may not support client keys for WebRTC operations
     const authString = Buffer.from(DID_API_KEY).toString('base64');
@@ -341,10 +342,13 @@ app.post('/api/agents/:agentId/streams/:streamId/sdp', async (req, res) => {
     });
 
     console.log('✅ SDP exchange successful');
+    console.log('✅ SDP response:', JSON.stringify(response.data, null, 2));
     res.json(response.data);
     
   } catch (error) {
     console.error('❌ Error with SDP exchange:', error.response?.data || error.message);
+    console.error('❌ SDP error status:', error.response?.status);
+    console.error('❌ SDP error headers:', error.response?.headers);
     res.status(error.response?.status || 500).json({
       error: 'Failed SDP exchange',
       details: error.response?.data || error.message
@@ -357,6 +361,7 @@ app.post('/api/agents/:agentId/streams/:streamId/ice', async (req, res) => {
   try {
     const { agentId, streamId } = req.params;
     console.log(`🧊 ICE candidate for agent: ${agentId}, stream: ${streamId}`);
+    console.log(`🧊 ICE request body:`, JSON.stringify(req.body, null, 2));
     
     // Use server API key for ICE - D-ID may not support client keys for WebRTC operations
     const authString = Buffer.from(DID_API_KEY).toString('base64');
@@ -371,11 +376,14 @@ app.post('/api/agents/:agentId/streams/:streamId/ice', async (req, res) => {
       }
     });
 
-    console.log('✅ ICE candidate processed');
+    console.log('✅ ICE candidate processed successfully');
+    console.log('✅ ICE response:', JSON.stringify(response.data, null, 2));
     res.json(response.data);
     
   } catch (error) {
     console.error('❌ Error with ICE candidate:', error.response?.data || error.message);
+    console.error('❌ ICE error status:', error.response?.status);
+    console.error('❌ ICE error headers:', error.response?.headers);
     res.status(error.response?.status || 500).json({
       error: 'Failed ICE candidate',
       details: error.response?.data || error.message
@@ -384,16 +392,23 @@ app.post('/api/agents/:agentId/streams/:streamId/ice', async (req, res) => {
 });
 
 // Catch-all proxy for all agent sub-routes (chat sessions, streams, etc.)
+// BUT exclude ICE and SDP routes which are handled above
 app.use('/api/agents/:agentId/*', async (req, res) => {
   try {
     const { agentId } = req.params;
     const subPath = req.params[0]; // Everything after /api/agents/:agentId/
+    
+    // Skip ICE and SDP routes - they're handled by specific endpoints above
+    if (subPath.includes('/ice') || subPath.includes('/sdp')) {
+      console.log(`⚠️ Skipping ${subPath} - handled by specific endpoint`);
+      return;
+    }
+    
     const targetUrl = `${DID_API_BASE}/agents/${agentId}/${subPath}`;
     
     console.log(`🔄 Proxying agent sub-route: ${req.method} ${req.originalUrl} -> ${targetUrl}`);
     console.log(`🔑 Original Authorization header:`, req.headers.authorization);
     console.log(`🔑 Request body:`, JSON.stringify(req.body, null, 2));
-    console.log(`🔑 All headers:`, req.headers);
 
     // Use server API key for ALL operations - client keys seem to have issues with chat sessions
     // DID_API_KEY is already in format "email:apikey", so encode it directly
