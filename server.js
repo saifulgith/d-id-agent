@@ -321,6 +321,68 @@ app.post('/api/agents/:agentId/chat', async (req, res) => {
   }
 });
 
+// WebRTC SDP endpoint for stream connections (MUST be before catch-all proxy)
+app.post('/api/agents/:agentId/streams/:streamId/sdp', async (req, res) => {
+  try {
+    const { agentId, streamId } = req.params;
+    console.log(`🎥 SDP exchange for agent: ${agentId}, stream: ${streamId}`);
+    
+    // Use server API key for SDP - D-ID may not support client keys for WebRTC operations
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    const authHeader = `Basic ${authString}`;
+    console.log(`🔑 Using server API key for SDP`);
+    
+    const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/streams/${streamId}/sdp`, req.body, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': authHeader
+      }
+    });
+
+    console.log('✅ SDP exchange successful');
+    res.json(response.data);
+    
+  } catch (error) {
+    console.error('❌ Error with SDP exchange:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed SDP exchange',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
+// WebRTC ICE candidate endpoint (MUST be before catch-all proxy)
+app.post('/api/agents/:agentId/streams/:streamId/ice', async (req, res) => {
+  try {
+    const { agentId, streamId } = req.params;
+    console.log(`🧊 ICE candidate for agent: ${agentId}, stream: ${streamId}`);
+    
+    // Use server API key for ICE - D-ID may not support client keys for WebRTC operations
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    const authHeader = `Basic ${authString}`;
+    console.log(`🔑 Using server API key for ICE`);
+    
+    const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/streams/${streamId}/ice`, req.body, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': authHeader
+      }
+    });
+
+    console.log('✅ ICE candidate processed');
+    res.json(response.data);
+    
+  } catch (error) {
+    console.error('❌ Error with ICE candidate:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed ICE candidate',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
 // Catch-all proxy for all agent sub-routes (chat sessions, streams, etc.)
 app.use('/api/agents/:agentId/*', async (req, res) => {
   try {
@@ -360,68 +422,6 @@ app.use('/api/agents/:agentId/*', async (req, res) => {
     console.error(`❌ Proxy error for ${req.method} ${req.originalUrl}:`, error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
       error: 'Proxy request failed',
-      details: error.response?.data || error.message
-    });
-  }
-});
-
-// WebRTC SDP endpoint for stream connections
-app.post('/api/agents/:agentId/streams/:streamId/sdp', async (req, res) => {
-  try {
-    const { agentId, streamId } = req.params;
-    console.log(`🎥 SDP exchange for agent: ${agentId}, stream: ${streamId}`);
-    
-    // Use server API key for SDP - D-ID may not support client keys for WebRTC operations
-    const authString = Buffer.from(DID_API_KEY).toString('base64');
-    const authHeader = `Basic ${authString}`;
-    console.log(`🔑 Using server API key for SDP`);
-    
-    const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/streams/${streamId}/sdp`, req.body, {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': authHeader
-      }
-    });
-
-    console.log('✅ SDP exchange successful');
-    res.json(response.data);
-    
-  } catch (error) {
-    console.error('❌ Error with SDP exchange:', error.response?.data || error.message);
-    res.status(error.response?.status || 500).json({
-      error: 'Failed SDP exchange',
-      details: error.response?.data || error.message
-    });
-  }
-});
-
-// WebRTC ICE candidate endpoint
-app.post('/api/agents/:agentId/streams/:streamId/ice', async (req, res) => {
-  try {
-    const { agentId, streamId } = req.params;
-    console.log(`🧊 ICE candidate for agent: ${agentId}, stream: ${streamId}`);
-    
-    // Use server API key for ICE - D-ID may not support client keys for WebRTC operations
-    const authString = Buffer.from(DID_API_KEY).toString('base64');
-    const authHeader = `Basic ${authString}`;
-    console.log(`🔑 Using server API key for ICE`);
-    
-    const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/streams/${streamId}/ice`, req.body, {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': authHeader
-      }
-    });
-
-    console.log('✅ ICE candidate processed');
-    res.json(response.data);
-    
-  } catch (error) {
-    console.error('❌ Error with ICE candidate:', error.response?.data || error.message);
-    res.status(error.response?.status || 500).json({
-      error: 'Failed ICE candidate',
       details: error.response?.data || error.message
     });
   }
