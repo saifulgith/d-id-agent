@@ -167,12 +167,11 @@ class DIDAgentFinal {
                         throw new Error('Container not found');
                     }
                     
-                    // Create agent manager with explicit container
+                    // Create agent manager with minimal required config
                     const agentManager = await window.createAgentManager({
                         agentId: agentId,
                         container: container,
                         clientKey: clientKey,
-                        streamType: window.StreamType.AVATAR,
                         onSrcObjectReady: (stream) => {
                             console.log('📹 Video stream ready - forcing video element creation');
                             
