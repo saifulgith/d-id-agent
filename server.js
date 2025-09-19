@@ -45,11 +45,13 @@ app.post('/api/client-key', async (req, res) => {
     
     // D-ID client key creation with proper parameters
     const requestBody = {
-      // Add any specific parameters from the request
-      ...req.body,
       // Set default allowed origins if not provided
-      allowed_origins: req.body.allowed_origins || [process.env.FRONTEND_ORIGIN || '*']
+      allowed_origins: req.body.allowed_origins || [process.env.FRONTEND_ORIGIN || '*'],
+      // Add expiration time (1 hour)
+      expires_in: req.body.expires_in || 3600
     };
+    
+    console.log('📝 Request body:', JSON.stringify(requestBody, null, 2));
     
     // D-ID uses Basic Auth with email:apikey format
     const authString = Buffer.from(DID_API_KEY).toString('base64');
@@ -67,6 +69,7 @@ app.post('/api/client-key', async (req, res) => {
     
   } catch (error) {
     console.error('❌ Error creating client key:', error.response?.data || error.message);
+    console.error('❌ Full error details:', JSON.stringify(error.response?.data, null, 2));
     res.status(error.response?.status || 500).json({
       error: 'Failed to create client key',
       details: error.response?.data || error.message
