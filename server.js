@@ -260,6 +260,90 @@ app.get('/api/agents/:agentId/streams', async (req, res) => {
   }
 });
 
+// Chat endpoint for agent conversations
+app.post('/api/agents/:agentId/chat', async (req, res) => {
+  try {
+    const { agentId } = req.params;
+    console.log(`💬 Creating chat for agent: ${agentId}`);
+    
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    
+    const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/chat`, req.body, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${authString}`
+      }
+    });
+
+    console.log('✅ Chat created successfully');
+    res.json(response.data);
+    
+  } catch (error) {
+    console.error('❌ Error creating chat:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to create chat',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
+// WebRTC SDP endpoint for stream connections
+app.post('/api/agents/:agentId/streams/:streamId/sdp', async (req, res) => {
+  try {
+    const { agentId, streamId } = req.params;
+    console.log(`🎥 SDP exchange for agent: ${agentId}, stream: ${streamId}`);
+    
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    
+    const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/streams/${streamId}/sdp`, req.body, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${authString}`
+      }
+    });
+
+    console.log('✅ SDP exchange successful');
+    res.json(response.data);
+    
+  } catch (error) {
+    console.error('❌ Error with SDP exchange:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed SDP exchange',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
+// WebRTC ICE candidate endpoint
+app.post('/api/agents/:agentId/streams/:streamId/ice', async (req, res) => {
+  try {
+    const { agentId, streamId } = req.params;
+    console.log(`🧊 ICE candidate for agent: ${agentId}, stream: ${streamId}`);
+    
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    
+    const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/streams/${streamId}/ice`, req.body, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${authString}`
+      }
+    });
+
+    console.log('✅ ICE candidate processed');
+    res.json(response.data);
+    
+  } catch (error) {
+    console.error('❌ Error with ICE candidate:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed ICE candidate',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
