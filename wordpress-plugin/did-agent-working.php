@@ -205,6 +205,17 @@ class DIDAgentWorking {
                             sdkContainer.innerHTML = '';
                             sdkContainer.appendChild(video);
                             console.log('✅ Forced video element creation');
+                        } else {
+                            // Ensure existing video has proper attributes
+                            const video = sdkContainer.querySelector('video');
+                            video.setAttribute('muted', 'true');
+                            video.setAttribute('autoplay', 'true');
+                            video.setAttribute('playsinline', 'true');
+                            video.muted = true;
+                            video.autoplay = true;
+                            video.playsInline = true;
+                            video.srcObject = value;
+                            console.log('✅ Updated existing video element with proper attributes');
                         }
                         
                         return value;
@@ -280,6 +291,26 @@ class DIDAgentWorking {
                         sdkContainer.appendChild(video);
                         
                         console.log('✅ Forced video element created');
+                    } else {
+                        // Ensure existing video has proper attributes
+                        const video = sdkContainer.querySelector('video');
+                        if (video) {
+                            video.setAttribute('muted', 'true');
+                            video.setAttribute('autoplay', 'true');
+                            video.setAttribute('playsinline', 'true');
+                            video.muted = true;
+                            video.autoplay = true;
+                            video.playsInline = true;
+                            
+                            // Try to play the video
+                            video.play().then(() => {
+                                console.log('✅ Video started playing successfully');
+                            }).catch(err => {
+                                console.warn('⚠️ Video play failed:', err);
+                            });
+                            
+                            console.log('✅ Updated video element attributes');
+                        }
                     }
                 }, 3000);
                 
