@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direct D-ID Test</title>
+</head>
+<body>
+    <h1>Direct D-ID API Test</h1>
+    <div id="status">Testing...</div>
+    <div id="results"></div>
+
+    <script>
+        async function testDirectDID() {
+            const status = document.getElementById('status');
+            const results = document.getElementById('results');
+            
+            try {
+                status.textContent = 'Testing direct D-ID API...';
+                
+                // Test 1: Health check
+                const healthResponse = await fetch('https://api.d-id.com/');
+                const healthData = await healthResponse.text();
+                results.innerHTML += '<h3>Health Check:</h3><pre>' + healthData + '</pre>';
+                
+                // Test 2: Agent info (this will fail without auth, but we can see the response)
+                try {
+                    const agentResponse = await fetch('https://api.d-id.com/agents/v2_agt_aKkqeO6X');
+                    const agentData = await agentResponse.text();
+                    results.innerHTML += '<h3>Agent Info (no auth):</h3><pre>' + agentData + '</pre>';
+                } catch (e) {
+                    results.innerHTML += '<h3>Agent Info (no auth):</h3><pre>Expected error: ' + e.message + '</pre>';
+                }
+                
+                // Test 3: Our proxy health
+                const proxyHealthResponse = await fetch('https://d-id-agent-1sdx.onrender.com/');
+                const proxyHealthData = await proxyHealthResponse.text();
+                results.innerHTML += '<h3>Proxy Health:</h3><pre>' + proxyHealthData + '</pre>';
+                
+                // Test 4: Our proxy client key
+                const clientKeyResponse = await fetch('https://d-id-agent-1sdx.onrender.com/api/client-key', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        agentId: 'v2_agt_aKkqeO6X',
+                        allowed_domains: [window.location.origin]
+                    })
+                });
+                const clientKeyData = await clientKeyResponse.text();
+                results.innerHTML += '<h3>Proxy Client Key:</h3><pre>' + clientKeyData + '</pre>';
+                
+                status.textContent = 'Tests completed!';
+                
+            } catch (error) {
+                status.textContent = 'Error: ' + error.message;
+                results.innerHTML += '<h3>Error:</h3><pre>' + error.message + '</pre>';
+            }
+        }
+        
+        // Run test when page loads
+        testDirectDID();
+    </script>
+</body>
+</html>

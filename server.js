@@ -321,6 +321,17 @@ app.post('/api/agents/:agentId/chat', async (req, res) => {
   }
 });
 
+// Handle OPTIONS requests for SDP (CORS preflight)
+app.options('/api/agents/:agentId/streams/:streamId/sdp', (req, res) => {
+  res.set({
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Client-Key',
+    'Access-Control-Max-Age': '86400'
+  });
+  res.sendStatus(200);
+});
+
 // WebRTC SDP endpoint for stream connections (MUST be before catch-all proxy)
 app.post('/api/agents/:agentId/streams/:streamId/sdp', async (req, res) => {
   try {
@@ -343,17 +354,45 @@ app.post('/api/agents/:agentId/streams/:streamId/sdp', async (req, res) => {
 
     console.log('✅ SDP exchange successful');
     console.log('✅ SDP response:', JSON.stringify(response.data, null, 2));
+    
+    // Set proper CORS headers for WebRTC
+    res.set({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Client-Key',
+      'Content-Type': 'application/json'
+    });
+    
     res.json(response.data);
     
   } catch (error) {
     console.error('❌ Error with SDP exchange:', error.response?.data || error.message);
     console.error('❌ SDP error status:', error.response?.status);
     console.error('❌ SDP error headers:', error.response?.headers);
+    
+    res.set({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Client-Key',
+      'Content-Type': 'application/json'
+    });
+    
     res.status(error.response?.status || 500).json({
       error: 'Failed SDP exchange',
       details: error.response?.data || error.message
     });
   }
+});
+
+// Handle OPTIONS requests for ICE (CORS preflight)
+app.options('/api/agents/:agentId/streams/:streamId/ice', (req, res) => {
+  res.set({
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Client-Key',
+    'Access-Control-Max-Age': '86400'
+  });
+  res.sendStatus(200);
 });
 
 // WebRTC ICE candidate endpoint (MUST be before catch-all proxy)
@@ -378,12 +417,29 @@ app.post('/api/agents/:agentId/streams/:streamId/ice', async (req, res) => {
 
     console.log('✅ ICE candidate processed successfully');
     console.log('✅ ICE response:', JSON.stringify(response.data, null, 2));
+    
+    // Set proper CORS headers for WebRTC
+    res.set({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Client-Key',
+      'Content-Type': 'application/json'
+    });
+    
     res.json(response.data);
     
   } catch (error) {
     console.error('❌ Error with ICE candidate:', error.response?.data || error.message);
     console.error('❌ ICE error status:', error.response?.status);
     console.error('❌ ICE error headers:', error.response?.headers);
+    
+    res.set({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Client-Key',
+      'Content-Type': 'application/json'
+    });
+    
     res.status(error.response?.status || 500).json({
       error: 'Failed ICE candidate',
       details: error.response?.data || error.message
