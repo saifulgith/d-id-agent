@@ -280,9 +280,9 @@ app.post('/api/agents/:agentId/chat', async (req, res) => {
   try {
     const { agentId } = req.params;
     console.log(`💬 Creating chat for agent: ${agentId}`);
-    
+
     const authString = Buffer.from(DID_API_KEY).toString('base64');
-    
+
     const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/chat`, req.body, {
       headers: {
         'Accept': 'application/json',
@@ -293,11 +293,47 @@ app.post('/api/agents/:agentId/chat', async (req, res) => {
 
     console.log('✅ Chat created successfully');
     res.json(response.data);
-    
+
   } catch (error) {
     console.error('❌ Error creating chat:', error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
       error: 'Failed to create chat',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
+// Catch-all proxy for all agent sub-routes (chat sessions, streams, etc.)
+app.use('/api/agents/:agentId/*', async (req, res) => {
+  try {
+    const { agentId } = req.params;
+    const subPath = req.params[0]; // Everything after /api/agents/:agentId/
+    const targetUrl = `${DID_API_BASE}/agents/${agentId}/${subPath}`;
+    
+    console.log(`🔄 Proxying agent sub-route: ${req.method} ${req.originalUrl} -> ${targetUrl}`);
+
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    
+    const response = await axios({
+      method: req.method,
+      url: targetUrl,
+      data: req.body,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${authString}`,
+        ...req.headers
+      },
+      params: req.query
+    });
+
+    console.log(`✅ Proxied successfully: ${req.method} ${req.originalUrl}`);
+    res.json(response.data);
+
+  } catch (error) {
+    console.error(`❌ Proxy error for ${req.method} ${req.originalUrl}:`, error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Proxy request failed',
       details: error.response?.data || error.message
     });
   }
