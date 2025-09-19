@@ -38,6 +38,7 @@ class DIDAgentFinal {
                 // Make SDK available globally
                 window.createAgentManager = sdk.createAgentManager;
                 window.StreamType = sdk.StreamType;
+                window.AgentsUI = sdk.AgentsUI;
                 
                 console.log("✅ D-ID SDK loaded as ES module");
             `;
@@ -98,7 +99,7 @@ class DIDAgentFinal {
             
             // Wait for SDK to load
             const waitForSDK = () => {
-                if (window.createAgentManager && window.StreamType) {
+                if (window.AgentsUI && window.StreamType) {
                     console.log('✅ D-ID SDK loaded successfully');
                     initializeAgent('<?php echo $agent_id; ?>');
                 } else {
@@ -160,87 +161,35 @@ class DIDAgentFinal {
                         return new originalWebSocket(url, protocols);
                     };
                     
-                    console.log('🎨 Creating D-ID Agent Manager...');
+                    console.log('🎨 Creating D-ID Agent with AgentsUI...');
                     
                     const container = document.getElementById('sdk-container-' + agentId);
                     if (!container) {
                         throw new Error('Container not found');
                     }
                     
-                    // Create agent manager with required config
-                    const agentManager = await window.createAgentManager({
+                    // Create agent with AgentsUI (simpler approach)
+                    const agent = new window.AgentsUI({
                         agentId: agentId,
                         container: container,
-                        clientKey: clientKey, // ✅ correct param
-                        onSrcObjectReady: (stream) => {
-                            console.log('📹 Video stream ready - forcing video element creation');
-                            
-                            // Force create video element if SDK doesn't
-                            let video = container.querySelector('video');
-                            if (!video) {
-                                video = document.createElement('video');
-                                video.setAttribute('autoplay', 'true');
-                                video.setAttribute('playsinline', 'true');
-                                video.setAttribute('muted', 'true');
-                                video.style.width = '100%';
-                                video.style.height = '100%';
-                                video.style.objectFit = 'cover';
-                                container.appendChild(video);
-                                console.log('✅ Forced video element creation');
-                            }
-                            
-                            // Set the stream
-                            if (video.srcObject !== stream) {
-                                video.srcObject = stream;
-                                console.log('✅ Video stream set');
-                            }
-                            
-                            // Force play
-                            video.play().then(() => {
-                                console.log('✅ Video playing successfully');
-                                hideLoading(agentId);
-                            }).catch(err => {
-                                console.log('❌ Video play failed:', err);
-                                // Try again with muted
-                                video.muted = true;
-                                video.play().then(() => {
-                                    console.log('✅ Video playing with muted');
-                                    hideLoading(agentId);
-                                }).catch(err2 => {
-                                    console.log('❌ Video play failed even with muted:', err2);
-                                });
-                            });
-                        },
-                        onVideoStateChange: (state) => {
-                            console.log('📹 Video state:', state);
-                            if (state === 'START') {
-                                hideLoading(agentId);
-                            }
-                        },
-                        onConnectionStateChange: (state) => {
-                            console.log('🔗 Connection state:', state);
-                            if (state === 'connected') {
-                                console.log('✅ Agent connected successfully!');
-                                // Send greeting after connection
-                                setTimeout(() => {
-                                    console.log('👋 Sending greeting message...');
-                                    agentManager.chat('Hello, how can I help you today?');
-                                }, 1000);
-                            } else if (state === 'disconnected' || state === 'fail') {
-                                showError(agentId);
-                            }
-                        },
-                        onNewMessage: (message) => {
-                            console.log('💬 New message:', message);
-                        },
-                        onError: (error) => {
-                            console.error('❌ Agent error:', error);
-                            showError(agentId);
-                        }
+                        clientKey: clientKey
                     });
                     
-                    console.log('✅ Agent manager created successfully');
+                    // Connect the agent
+                    await agent.connect();
+                    console.log('✅ Agent connected successfully!');
+                    
+                    // Send greeting after connection
+                    setTimeout(() => {
+                        console.log('👋 Sending greeting message...');
+                        agent.say('Hello, how can I help you today?');
+                    }, 1000);
+                    
+                    console.log('✅ Agent created successfully');
                     console.log('🎉 D-ID Agent Final is ready!');
+                    
+                    // Hide loading
+                    hideLoading(agentId);
                     
                 } catch (error) {
                     console.error('❌ Failed to initialize agent:', error);
