@@ -27,19 +27,24 @@ class DIDAgentFinal {
     }
     
     public function enqueue_scripts() {
-        // Load D-ID SDK as UMD build
+        // Load D-ID SDK as UMD build - VERSION 2.0
         wp_add_inline_script('jquery', '
+            console.log("🚀 D-ID Agent Final V2.0 - Loading UMD SDK");
+            
             // Load D-ID SDK as UMD build
             const script = document.createElement("script");
-            script.src = "https://cdn.jsdelivr.net/npm/@d-id/client-sdk@latest/dist/index.umd.js";
+            script.src = "https://cdn.jsdelivr.net/npm/@d-id/client-sdk@latest/dist/index.umd.js?v=2.0";
             script.onload = function() {
-                console.log("✅ D-ID SDK loaded as UMD");
+                console.log("✅ D-ID SDK loaded as UMD V2.0");
                 console.log("✅ Available classes:", {
                     createAgentManager: !!window.createAgentManager,
                     StreamType: !!window.StreamType,
                     AgentsUI: !!window.AgentsUI,
                     DID: !!window.DID
                 });
+            };
+            script.onerror = function() {
+                console.error("❌ Failed to load D-ID SDK UMD");
             };
             document.head.appendChild(script);
             
@@ -50,7 +55,7 @@ class DIDAgentFinal {
                 nonce: "' . wp_create_nonce('did_agent_nonce') . '"
             };
             
-            console.log("🎯 D-ID Agent Final - Using Official SDK");
+            console.log("🎯 D-ID Agent Final V2.0 - Using Official SDK");
         ');
     }
     
