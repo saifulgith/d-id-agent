@@ -322,6 +322,11 @@ app.use('/api/agents/:agentId/*', async (req, res) => {
 
     const authString = Buffer.from(DID_API_KEY).toString('base64');
     
+    // Remove any existing authorization header from the request
+    const headers = { ...req.headers };
+    delete headers.authorization;
+    delete headers.Authorization;
+    
     const response = await axios({
       method: req.method,
       url: targetUrl,
@@ -330,7 +335,7 @@ app.use('/api/agents/:agentId/*', async (req, res) => {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'Authorization': `Basic ${authString}`,
-        ...req.headers
+        ...headers
       },
       params: req.query
     });
