@@ -29,7 +29,7 @@ class DIDAgentOfficial {
         // Load D-ID SDK from official CDN
         wp_enqueue_script(
             'd-id-sdk',
-            'https://cdn.d-id.com/sdk/v2/did-sdk.js',
+            'https://cdn.jsdelivr.net/npm/@d-id/client-sdk@latest/dist/index.js',
             array(),
             '2.0.0',
             true
@@ -106,12 +106,12 @@ class DIDAgentOfficial {
                 
                 // Wait for D-ID SDK to load
                 let retries = 0;
-                while (typeof window.DID === 'undefined' && retries < 30) {
+                while (typeof window.createAgentManager === 'undefined' && retries < 30) {
                     await new Promise(resolve => setTimeout(resolve, 200));
                     retries++;
                 }
                 
-                if (typeof window.DID === 'undefined') {
+                if (typeof window.createAgentManager === 'undefined') {
                     throw new Error('D-ID SDK not loaded after 30 retries');
                 }
                 
@@ -171,28 +171,47 @@ class DIDAgentOfficial {
                     return new originalWebSocket(url, protocols);
                 };
                 
-                // Create agent UI instance with official SDK
-                console.log('🎨 Creating D-ID Agent UI with official SDK...');
+                // Create agent manager with official SDK
+                console.log('🎨 Creating D-ID Agent Manager with official SDK...');
                 
-                const didAgent = new window.DID.AgentsUI({
-                    apiKey: clientKey,
-                    agentId: agentId,
-                    container: sdkContainer,
-                    loadingElement: loadingDiv,
-                    errorElement: errorDiv,
+                const auth = { type: 'key', clientKey: clientKey };
+                
+                const callbacks = {
+                    onConnectionStateChange: (state) => {
+                        console.log('🔗 Connection state:', state);
+                        if (state === 'connected') {
+                            console.log('✅ Agent connected successfully!');
+                            loadingDiv.style.display = 'none';
+                        }
+                    },
+                    onError: (error, errorData) => {
+                        console.error('❌ Agent error:', error, errorData);
+                        loadingDiv.style.display = 'none';
+                        errorDiv.style.display = 'flex';
+                        errorDiv.querySelector('p').textContent = error.message || 'Agent connection failed';
+                    },
+                    onNewMessage: (messages, type) => {
+                        console.log('💬 New message:', messages, type);
+                    }
+                };
+                
+                const agentManager = await window.createAgentManager(agentId, {
+                    auth,
+                    callbacks,
+                    container: sdkContainer
                 });
                 
-                console.log('✅ Agent UI instance created');
+                console.log('✅ Agent manager created');
                 
-                // Connect automatically (UI will appear once ready)
-                await didAgent.connect();
+                // Connect automatically
+                await agentManager.connect();
                 
                 console.log('✅ Agent connected successfully!');
                 
                 // Send greeting message
                 setTimeout(() => {
                     console.log('👋 Sending greeting message...');
-                    didAgent.say("Hello, how can I help you today?");
+                    agentManager.chat("Hello, how can I help you today?");
                 }, 2000);
                 
                 console.log('🎉 D-ID Agent Official is ready!');
