@@ -100,7 +100,7 @@ app.post('/api/client-key', async (req, res) => {
     // D-ID uses Basic Auth with email:apikey format
     const authString = Buffer.from(DID_API_KEY).toString('base64');
     
-    const response = await axios.post(`${DID_API_BASE}/agents/client-key`, requestBody, {
+        const response = await axios.post(`${DID_API_BASE}/client-keys`, requestBody, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -149,7 +149,7 @@ app.post('/client-key', async (req, res) => {
     // D-ID uses Basic Auth with email:apikey format
     const authString = Buffer.from(DID_API_KEY).toString('base64');
     
-    const response = await axios.post(`${DID_API_BASE}/agents/client-key`, requestBody, {
+        const response = await axios.post(`${DID_API_BASE}/client-keys`, requestBody, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
