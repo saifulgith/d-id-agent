@@ -171,9 +171,7 @@ class DIDAgentFinal {
                     const agentManager = await window.createAgentManager({
                         agentId: agentId,
                         container: container,
-                        apiKey: clientKey, // Try apiKey instead of clientKey
-                        clientKey: clientKey, // Keep both for compatibility
-                        mixpanelKey: 'dummy-mixpanel-key', // Required by D-ID SDK
+                        clientKey: clientKey, // ✅ correct param
                         onSrcObjectReady: (stream) => {
                             console.log('📹 Video stream ready - forcing video element creation');
                             
