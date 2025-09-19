@@ -331,17 +331,11 @@ app.use('/api/agents/:agentId/*', async (req, res) => {
     console.log(`🔄 Proxying agent sub-route: ${req.method} ${req.originalUrl} -> ${targetUrl}`);
     console.log(`🔑 Original Authorization header:`, req.headers.authorization);
 
-    // Use the original Authorization header from the D-ID SDK if available
-    // Otherwise fall back to our server API key
-    let authHeader;
-    if (req.headers.authorization) {
-      authHeader = req.headers.authorization;
-      console.log(`✅ Using D-ID SDK authorization header`);
-    } else {
-      const authString = Buffer.from(DID_API_KEY).toString('base64');
-      authHeader = `Basic ${authString}`;
-      console.log(`⚠️  Using fallback server API key`);
-    }
+    // Always use our server API key for D-ID API calls
+    // The D-ID SDK sends client keys, but D-ID API expects Basic Auth
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    const authHeader = `Basic ${authString}`;
+    console.log(`🔑 Using server API key for D-ID API call`);
     
     // Prepare headers - keep original headers but ensure proper auth
     const headers = { ...req.headers };
