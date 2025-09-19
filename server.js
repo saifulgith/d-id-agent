@@ -396,6 +396,7 @@ app.use('/api/agents/:agentId/*', async (req, res) => {
     console.log(`🔑 All headers:`, req.headers);
 
     // Use server API key for ALL operations - client keys seem to have issues with chat sessions
+    // DID_API_KEY is already in format "email:apikey", so encode it directly
     const authString = Buffer.from(DID_API_KEY).toString('base64');
     const authHeader = `Basic ${authString}`;
     console.log(`🔑 Using server API key for all routes: ${subPath}`);
