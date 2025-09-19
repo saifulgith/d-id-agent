@@ -332,28 +332,10 @@ app.use('/api/agents/:agentId/*', async (req, res) => {
     console.log(`🔑 Original Authorization header:`, req.headers.authorization);
     console.log(`🔑 All headers:`, req.headers);
 
-    // Conditional auth: Use client key for signaling routes, server key for management
-    let authHeader;
-    if (subPath.includes('sdp') || subPath.includes('ice')) {
-      // For WebRTC signaling (SDP, ICE), convert Client-Key to Basic auth
-      if (req.headers.authorization && req.headers.authorization.startsWith('Client-Key ')) {
-        const clientKey = req.headers.authorization.replace('Client-Key ', '');
-        // D-ID requires base64("client_key:") format
-        const encoded = Buffer.from(`${clientKey}:`).toString('base64');
-        authHeader = `Basic ${encoded}`;
-        console.log(`🔑 Converted Client-Key to valid Basic auth for signaling route: ${subPath}`);
-      } else {
-        // Fallback to server API key
-        const authString = Buffer.from(DID_API_KEY).toString('base64');
-        authHeader = `Basic ${authString}`;
-        console.log(`🔑 Using server API key as fallback for signaling route: ${subPath}`);
-      }
-    } else {
-      // For management endpoints, use server API key
-      const authString = Buffer.from(DID_API_KEY).toString('base64');
-      authHeader = `Basic ${authString}`;
-      console.log(`🔑 Using server API key for management route: ${subPath}`);
-    }
+    // Use server API key for ALL operations - D-ID may not support client keys for SDP/ICE
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    const authHeader = `Basic ${authString}`;
+    console.log(`🔑 Using server API key for all routes: ${subPath}`);
     
     // Prepare headers - keep original headers but ensure proper auth
     const headers = { ...req.headers };
@@ -389,20 +371,10 @@ app.post('/api/agents/:agentId/streams/:streamId/sdp', async (req, res) => {
     const { agentId, streamId } = req.params;
     console.log(`🎥 SDP exchange for agent: ${agentId}, stream: ${streamId}`);
     
-    // Convert Client-Key to Basic auth for D-ID API
-    let authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Client-Key ')) {
-      const clientKey = authHeader.replace('Client-Key ', '');
-      // D-ID requires base64("client_key:") format
-      const encoded = Buffer.from(`${clientKey}:`).toString('base64');
-      authHeader = `Basic ${encoded}`;
-      console.log(`🔑 Converted Client-Key to valid Basic auth for SDP`);
-    } else {
-      // Fallback to server API key
-      const authString = Buffer.from(DID_API_KEY).toString('base64');
-      authHeader = `Basic ${authString}`;
-      console.log(`🔑 Using server API key for SDP`);
-    }
+    // Use server API key for SDP - D-ID may not support client keys for WebRTC operations
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    const authHeader = `Basic ${authString}`;
+    console.log(`🔑 Using server API key for SDP`);
     
     const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/streams/${streamId}/sdp`, req.body, {
       headers: {
@@ -430,20 +402,10 @@ app.post('/api/agents/:agentId/streams/:streamId/ice', async (req, res) => {
     const { agentId, streamId } = req.params;
     console.log(`🧊 ICE candidate for agent: ${agentId}, stream: ${streamId}`);
     
-    // Convert Client-Key to Basic auth for D-ID API
-    let authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Client-Key ')) {
-      const clientKey = authHeader.replace('Client-Key ', '');
-      // D-ID requires base64("client_key:") format
-      const encoded = Buffer.from(`${clientKey}:`).toString('base64');
-      authHeader = `Basic ${encoded}`;
-      console.log(`🔑 Converted Client-Key to valid Basic auth for ICE`);
-    } else {
-      // Fallback to server API key
-      const authString = Buffer.from(DID_API_KEY).toString('base64');
-      authHeader = `Basic ${authString}`;
-      console.log(`🔑 Using server API key for ICE`);
-    }
+    // Use server API key for ICE - D-ID may not support client keys for WebRTC operations
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    const authHeader = `Basic ${authString}`;
+    console.log(`🔑 Using server API key for ICE`);
     
     const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/streams/${streamId}/ice`, req.body, {
       headers: {
