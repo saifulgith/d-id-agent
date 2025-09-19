@@ -1,6 +1,8 @@
 // D-ID Agent Integration for WordPress
 // This script handles the frontend integration with the D-ID SDK
 
+console.log('🚨 URGENT: D-ID Agent Integration v3.0 - This is a test message!');
+
 class DIDAgentIntegration {
     constructor() {
         this.agentInstances = new Map();
@@ -8,11 +10,22 @@ class DIDAgentIntegration {
     }
     
     async init() {
-        // Wait for D-ID SDK to load
+        // Wait for D-ID SDK to load with retry mechanism
+        let retries = 0;
+        const maxRetries = 10;
+        
+        while (typeof window.createAgentManager === 'undefined' && retries < maxRetries) {
+            console.log('Waiting for D-ID SDK to load...', retries + 1);
+            await new Promise(resolve => setTimeout(resolve, 500));
+            retries++;
+        }
+        
         if (typeof window.createAgentManager === 'undefined') {
-            console.error('D-ID SDK not loaded');
+            console.error('D-ID SDK not loaded after', maxRetries, 'retries');
             return;
         }
+        
+        console.log('D-ID SDK loaded successfully');
         
         // Initialize all agent containers on the page
         const containers = document.querySelectorAll('.did-agent-container');
@@ -25,6 +38,8 @@ class DIDAgentIntegration {
         const agentId = container.dataset.agentId;
         const theme = container.dataset.theme || 'default';
         
+        console.log('Initializing agent:', agentId);
+        
         if (!agentId) {
             this.showError(container, 'Agent ID is required');
             return;
@@ -35,13 +50,16 @@ class DIDAgentIntegration {
             this.showLoading(container);
             
             // Get client key from backend
+            console.log('Getting client key from backend...');
             const clientKey = await this.getClientKey(agentId);
+            console.log('Client key received:', clientKey ? 'Yes' : 'No');
             
             if (!clientKey) {
                 throw new Error('Failed to get client key from backend');
             }
             
             // Initialize the agent
+            console.log('Creating agent with client key...');
             await this.createAgent(container, agentId, clientKey, theme);
             
         } catch (error) {
@@ -52,6 +70,9 @@ class DIDAgentIntegration {
     
     async getClientKey(agentId) {
         try {
+            console.log('Fetching from:', `${didAgentConfig.backendUrl}/api/client-key`);
+            console.log('Backend URL config:', didAgentConfig.backendUrl);
+            
             const response = await fetch(`${didAgentConfig.backendUrl}/api/client-key`, {
                 method: 'POST',
                 headers: {
@@ -63,16 +84,22 @@ class DIDAgentIntegration {
                 })
             });
             
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+            
             if (!response.ok) {
-                throw new Error(`Backend error: ${response.status}`);
+                const errorText = await response.text();
+                console.error('Backend error response:', errorText);
+                throw new Error(`Backend error: ${response.status} - ${errorText}`);
             }
             
             const data = await response.json();
+            console.log('Backend response data:', data);
             return data.clientKey || data.key || data.token;
             
         } catch (error) {
             console.error('Error getting client key:', error);
-            throw new Error('Failed to connect to backend server');
+            throw new Error('Failed to connect to backend server: ' + error.message);
         }
     }
     

@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import axios from 'axios';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 // Load environment variables
 dotenv.config();
@@ -40,6 +41,18 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// WebSocket proxy for D-ID notifications
+app.use('/api/notifications', createProxyMiddleware({
+  target: 'wss://notifications.d-id.com',
+  changeOrigin: true,
+  ws: true,
+  secure: true,
+  pathRewrite: { '^/api/notifications': '' },
+  onError: (err, req, res) => {
+    console.error('WebSocket proxy error:', err);
+  }
+}));
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -67,10 +80,11 @@ app.post('/api/client-key', async (req, res) => {
   try {
     console.log('🔑 Creating client key...');
     
-    // Create a proper D-ID client key
+    // Create a proper D-ID client key with WebSocket capabilities
     const requestBody = {
       allowed_origins: req.body.allowed_origins || [process.env.FRONTEND_ORIGIN || '*'],
-      expires_in: req.body.expires_in || 3600
+      expires_in: req.body.expires_in || 3600,
+      capabilities: ['streaming', 'ws'] // Enable WebSocket and streaming capabilities
     };
     
     console.log('📝 Request body:', JSON.stringify(requestBody, null, 2));
@@ -110,10 +124,11 @@ app.post('/client-key', async (req, res) => {
   try {
     console.log('🔑 Creating client key (via /client-key route)...');
     
-    // Create a proper D-ID client key
+    // Create a proper D-ID client key with WebSocket capabilities
     const requestBody = {
       allowed_origins: req.body.allowed_origins || [process.env.FRONTEND_ORIGIN || '*'],
-      expires_in: req.body.expires_in || 3600
+      expires_in: req.body.expires_in || 3600,
+      capabilities: ['streaming', 'ws'] // Enable WebSocket and streaming capabilities
     };
     
     console.log('📝 Request body:', JSON.stringify(requestBody, null, 2));
