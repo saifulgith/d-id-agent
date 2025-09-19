@@ -346,24 +346,26 @@ app.post('/api/agents/:agentId/streams/:streamId/sdp', async (req, res) => {
     
     const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/streams/${streamId}/sdp`, req.body, {
       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
+        'Accept': 'application/sdp',
+        'Content-Type': 'application/sdp',
         'Authorization': authHeader
       }
     });
 
     console.log('✅ SDP exchange successful');
-    console.log('✅ SDP response:', JSON.stringify(response.data, null, 2));
-    
+    console.log('✅ SDP response type:', typeof response.data);
+    console.log('✅ SDP response length:', response.data ? response.data.length : 'null');
+
     // Set proper CORS headers for WebRTC
     res.set({
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, Client-Key',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/sdp'
     });
-    
-    res.json(response.data);
+
+    // Send SDP data as text, not JSON
+    res.send(response.data);
     
   } catch (error) {
     console.error('❌ Error with SDP exchange:', error.response?.data || error.message);
@@ -374,13 +376,10 @@ app.post('/api/agents/:agentId/streams/:streamId/sdp', async (req, res) => {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, Client-Key',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/sdp'
     });
-    
-    res.status(error.response?.status || 500).json({
-      error: 'Failed SDP exchange',
-      details: error.response?.data || error.message
-    });
+
+    res.status(error.response?.status || 500).send(error.response?.data || error.message);
   }
 });
 
