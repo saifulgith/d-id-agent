@@ -109,8 +109,8 @@ class DIDAgentPlugin {
                                 // Add client key to all D-ID API requests
                                 if (window.didAgentConfig.clientKey) {
                                     options.headers = options.headers || {};
-                                    options.headers['Authorization'] = 'Client-Key ' + window.didAgentConfig.clientKey;
-                                    console.log("Added client key to request:", options.headers['Authorization']);
+                                    options.headers["Authorization"] = "Client-Key " + window.didAgentConfig.clientKey;
+                                    console.log("Added client key to request:", options.headers["Authorization"]);
                                 }
                                 
                                 return originalFetch(newUrl, options);
