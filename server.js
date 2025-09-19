@@ -3,9 +3,17 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import axios from 'axios';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import https from 'https';
 
 // Load environment variables
 dotenv.config();
+
+// Configure axios to ignore SSL certificate errors
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false
+});
+
+axios.defaults.httpsAgent = httpsAgent;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
