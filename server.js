@@ -346,8 +346,8 @@ app.post('/api/agents/:agentId/streams/:streamId/sdp', async (req, res) => {
     
     const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/streams/${streamId}/sdp`, req.body, {
       headers: {
-        'Accept': 'application/sdp',
-        'Content-Type': 'application/sdp',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
         'Authorization': authHeader
       }
     });
@@ -361,11 +361,11 @@ app.post('/api/agents/:agentId/streams/:streamId/sdp', async (req, res) => {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, Client-Key',
-      'Content-Type': 'application/sdp'
+      'Content-Type': 'application/json'
     });
 
-    // Send SDP data as text, not JSON
-    res.send(response.data);
+    // Send SDP data as JSON
+    res.json(response.data);
     
   } catch (error) {
     console.error('❌ Error with SDP exchange:', error.response?.data || error.message);
@@ -376,10 +376,13 @@ app.post('/api/agents/:agentId/streams/:streamId/sdp', async (req, res) => {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, Client-Key',
-      'Content-Type': 'application/sdp'
+      'Content-Type': 'application/json'
     });
 
-    res.status(error.response?.status || 500).send(error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'SDP exchange failed',
+      details: error.response?.data || error.message
+    });
   }
 });
 
