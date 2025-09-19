@@ -335,10 +335,17 @@ app.use('/api/agents/:agentId/*', async (req, res) => {
     // Conditional auth: Use client key for signaling routes, server key for management
     let authHeader;
     if (subPath.includes('sdp') || subPath.includes('ice')) {
-      // For WebRTC signaling (SDP, ICE), keep the client key from frontend
-      authHeader = req.headers.authorization;
-      console.log(`🔑 Using client key for signaling route: ${subPath}`);
-      console.log(`🔑 Client key value:`, authHeader);
+      // For WebRTC signaling (SDP, ICE), convert Client-Key to Basic auth
+      if (req.headers.authorization && req.headers.authorization.startsWith('Client-Key ')) {
+        const clientKey = req.headers.authorization.replace('Client-Key ', '');
+        authHeader = `Basic ${clientKey}`;
+        console.log(`🔑 Converted Client-Key to Basic auth for signaling route: ${subPath}`);
+      } else {
+        // Fallback to server API key
+        const authString = Buffer.from(DID_API_KEY).toString('base64');
+        authHeader = `Basic ${authString}`;
+        console.log(`🔑 Using server API key as fallback for signaling route: ${subPath}`);
+      }
     } else {
       // For management endpoints, use server API key
       const authString = Buffer.from(DID_API_KEY).toString('base64');
@@ -380,12 +387,19 @@ app.post('/api/agents/:agentId/streams/:streamId/sdp', async (req, res) => {
     const { agentId, streamId } = req.params;
     console.log(`🎥 SDP exchange for agent: ${agentId}, stream: ${streamId}`);
     
-    // Use client key for SDP signaling
+    // Convert Client-Key to Basic auth for D-ID API
+    let authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Client-Key ')) {
+      const clientKey = authHeader.replace('Client-Key ', '');
+      authHeader = `Basic ${clientKey}`;
+      console.log(`🔑 Converted Client-Key to Basic auth for SDP`);
+    }
+    
     const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/streams/${streamId}/sdp`, req.body, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': req.headers.authorization // Keep client key!
+        'Authorization': authHeader
       }
     });
 
@@ -407,12 +421,19 @@ app.post('/api/agents/:agentId/streams/:streamId/ice', async (req, res) => {
     const { agentId, streamId } = req.params;
     console.log(`🧊 ICE candidate for agent: ${agentId}, stream: ${streamId}`);
     
-    // Use client key for ICE signaling
+    // Convert Client-Key to Basic auth for D-ID API
+    let authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Client-Key ')) {
+      const clientKey = authHeader.replace('Client-Key ', '');
+      authHeader = `Basic ${clientKey}`;
+      console.log(`🔑 Converted Client-Key to Basic auth for ICE`);
+    }
+    
     const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/streams/${streamId}/ice`, req.body, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': req.headers.authorization // Keep client key!
+        'Authorization': authHeader
       }
     });
 
