@@ -2,7 +2,7 @@
 /**
  * Plugin Name: D-ID Agent Proper
  * Description: Proper D-ID Agent integration using SDK's built-in professional interface
- * Version: 1.0.0
+ * Version: 2.0.0
  * Author: Your Name
  */
 
@@ -31,7 +31,7 @@ class DIDAgentProper {
             'did-sdk',
             'https://cdn.jsdelivr.net/npm/@d-id/client-sdk@latest/dist/index.js',
             array(),
-            '1.0.0',
+            '2.0.0',
             true
         );
         
@@ -58,7 +58,7 @@ class DIDAgentProper {
                 nonce: "' . wp_create_nonce('did_agent_nonce') . '"
             };
             
-            console.log("🎯 D-ID Agent Proper - Using Official SDK Interface");
+            console.log("🎯 D-ID Agent Proper v2.0 - Using Official SDK Interface");
         ');
     }
     
@@ -84,7 +84,7 @@ class DIDAgentProper {
         ob_start();
         ?>
         <div id="did-agent-proper-<?php echo $agent_id; ?>" 
-             style="width: <?php echo $width; ?>; height: <?php echo $height; ?>; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);">
+             style="width: <?php echo $width; ?>; height: <?php echo $height; ?>; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12); position: relative;">
             
             <!-- Loading State -->
             <div id="loading-<?php echo $agent_id; ?>" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
@@ -97,9 +97,9 @@ class DIDAgentProper {
                 <p style="margin: 0;">Failed to connect to AI Agent. Please try again later.</p>
             </div>
             
-            <!-- D-ID SDK will create its professional interface here -->
-            <div id="sdk-container-<?php echo $agent_id; ?>" style="width: 100%; height: 100%; position: relative;">
-                <!-- D-ID SDK professional interface will be injected here -->
+            <!-- D-ID SDK Container - Must be visible and ready -->
+            <div id="sdk-container-<?php echo $agent_id; ?>" style="width: 100%; height: 100%; position: relative; display: block; visibility: visible; opacity: 1; z-index: 1;">
+                <!-- D-ID SDK will inject its professional interface here -->
             </div>
         </div>
         
@@ -107,6 +107,14 @@ class DIDAgentProper {
             @keyframes spin {
                 0% { transform: rotate(0deg); }
                 100% { transform: rotate(360deg); }
+            }
+            
+            /* Ensure D-ID SDK container is ready for rendering */
+            #sdk-container-<?php echo $agent_id; ?> {
+                min-height: 400px;
+                background: #f8f9fa;
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
             }
         </style>
         
@@ -119,17 +127,17 @@ class DIDAgentProper {
             const sdkContainer = document.getElementById('sdk-container-' + agentId);
             
             try {
-                console.log('🚀 Initializing D-ID Agent with proper SDK interface:', agentId);
+                console.log('🚀 Initializing D-ID Agent v2.0 with proper SDK interface:', agentId);
                 
                 // Wait for D-ID SDK to load
                 let retries = 0;
-                while (typeof window.createAgentManager === 'undefined' && retries < 20) {
-                    await new Promise(resolve => setTimeout(resolve, 250));
+                while (typeof window.createAgentManager === 'undefined' && retries < 30) {
+                    await new Promise(resolve => setTimeout(resolve, 200));
                     retries++;
                 }
                 
                 if (typeof window.createAgentManager === 'undefined') {
-                    throw new Error('D-ID SDK not loaded');
+                    throw new Error('D-ID SDK not loaded after 30 retries');
                 }
                 
                 console.log('✅ D-ID SDK loaded successfully');
@@ -207,6 +215,12 @@ class DIDAgentProper {
                         console.log('🔗 Connection state:', state);
                         if (state === 'connected') {
                             console.log('✅ Agent connected successfully!');
+                            // Hide loading and show SDK interface
+                            loadingDiv.style.display = 'none';
+                            sdkContainer.style.display = 'block';
+                            sdkContainer.style.visibility = 'visible';
+                            sdkContainer.style.opacity = '1';
+                            sdkContainer.style.zIndex = '1';
                         }
                     },
                     onError: (error, errorData) => {
@@ -222,9 +236,7 @@ class DIDAgentProper {
                 // Define stream options as per official documentation
                 const streamOptions = {
                     compatibilityMode: 'auto',
-                    streamWarmup: true,
-                    // sessionTimeout: 300, // Optional
-                    // outputResolution: 720 // Optional
+                    streamWarmup: true
                 };
                 
                 // Create agent manager - D-ID SDK will create its professional interface
@@ -241,15 +253,6 @@ class DIDAgentProper {
                 console.log('✅ Agent manager created successfully');
                 
                 await agentManager.connect();
-                
-                // Hide loading and show SDK interface
-                loadingDiv.style.display = 'none';
-                sdkContainer.style.display = 'block';
-                sdkContainer.style.visibility = 'visible';
-                
-                // Force container to be visible for SDK
-                sdkContainer.style.opacity = '1';
-                sdkContainer.style.zIndex = '1';
                 
                 console.log('🎉 D-ID Agent with proper SDK interface is ready!');
                 
