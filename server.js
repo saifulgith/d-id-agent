@@ -330,6 +330,7 @@ app.use('/api/agents/:agentId/*', async (req, res) => {
     
     console.log(`🔄 Proxying agent sub-route: ${req.method} ${req.originalUrl} -> ${targetUrl}`);
     console.log(`🔑 Original Authorization header:`, req.headers.authorization);
+    console.log(`🔑 All headers:`, req.headers);
 
     // Conditional auth: Use client key for signaling routes, server key for management
     let authHeader;
