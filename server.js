@@ -117,11 +117,15 @@ app.post('/api/client-key', async (req, res) => {
     
     // Fallback to using server API key if D-ID client key creation fails
     console.log('🔄 Falling back to server API key...');
-        const tempClientKey = {
-          client_key: DID_API_KEY,
-          expires_in: 3600,
-          allowed_domains: req.body.allowed_domains || [process.env.FRONTEND_ORIGIN || '*']
-        };
+    console.log('⚠️  Note: Using server API key directly - this may not work with D-ID SDK');
+    
+    // The D-ID SDK expects a client key, but we'll use the server key
+    // This might not work for streaming/WebSocket operations
+    const tempClientKey = {
+      client_key: DID_API_KEY,
+      expires_in: 3600,
+      allowed_domains: req.body.allowed_domains || [process.env.FRONTEND_ORIGIN || '*']
+    };
     
     res.json(tempClientKey);
   }
@@ -161,11 +165,15 @@ app.post('/client-key', async (req, res) => {
     
     // Fallback to using server API key if D-ID client key creation fails
     console.log('🔄 Falling back to server API key...');
-        const tempClientKey = {
-          client_key: DID_API_KEY,
-          expires_in: 3600,
-          allowed_domains: req.body.allowed_domains || [process.env.FRONTEND_ORIGIN || '*']
-        };
+    console.log('⚠️  Note: Using server API key directly - this may not work with D-ID SDK');
+    
+    // The D-ID SDK expects a client key, but we'll use the server key
+    // This might not work for streaming/WebSocket operations
+    const tempClientKey = {
+      client_key: DID_API_KEY,
+      expires_in: 3600,
+      allowed_domains: req.body.allowed_domains || [process.env.FRONTEND_ORIGIN || '*']
+    };
     
     res.json(tempClientKey);
   }
@@ -327,6 +335,7 @@ app.use('/api/agents/:agentId/*', async (req, res) => {
     delete headers.authorization;
     delete headers.Authorization;
     
+    // Add proper D-ID authentication
     const response = await axios({
       method: req.method,
       url: targetUrl,
