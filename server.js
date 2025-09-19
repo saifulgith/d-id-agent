@@ -394,28 +394,10 @@ app.use('/api/agents/:agentId/*', async (req, res) => {
     console.log(`🔑 Original Authorization header:`, req.headers.authorization);
     console.log(`🔑 All headers:`, req.headers);
 
-    // Conditional auth: Use client key for chat, server key for SDP/ICE
-    let authHeader;
-    if (subPath.includes('sdp') || subPath.includes('ice')) {
-      // For WebRTC signaling (SDP, ICE), use server API key
-      const authString = Buffer.from(DID_API_KEY).toString('base64');
-      authHeader = `Basic ${authString}`;
-      console.log(`🔑 Using server API key for signaling route: ${subPath}`);
-    } else {
-      // For chat and other operations, try to use client key if available
-      if (req.headers.authorization && req.headers.authorization.startsWith('Client-Key ')) {
-        const clientKey = req.headers.authorization.replace('Client-Key ', '');
-        // Convert Client-Key to Basic auth format
-        const encoded = Buffer.from(`${clientKey}:`).toString('base64');
-        authHeader = `Basic ${encoded}`;
-        console.log(`🔑 Using client key for chat route: ${subPath}`);
-      } else {
-        // Fallback to server API key
-        const authString = Buffer.from(DID_API_KEY).toString('base64');
-        authHeader = `Basic ${authString}`;
-        console.log(`🔑 Using server API key as fallback for route: ${subPath}`);
-      }
-    }
+    // Use server API key for ALL operations - client keys seem to have issues with chat sessions
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    const authHeader = `Basic ${authString}`;
+    console.log(`🔑 Using server API key for all routes: ${subPath}`);
     
     // Prepare headers - keep original headers but ensure proper auth
     const headers = { ...req.headers };
