@@ -154,7 +154,11 @@ app.get('/api/agents/:agentId', async (req, res) => {
     const { agentId } = req.params;
     console.log(`🔍 Getting agent details for: ${agentId}`);
     
+    // Use server API key for backend calls to D-ID
     const authString = Buffer.from(DID_API_KEY).toString('base64');
+    
+    console.log(`📡 Calling D-ID API: ${DID_API_BASE}/agents/${agentId}`);
+    console.log(`🔑 Using auth: Basic ${authString.substring(0, 20)}...`);
     
     const response = await axios.get(`${DID_API_BASE}/agents/${agentId}`, {
       headers: {
@@ -163,10 +167,12 @@ app.get('/api/agents/:agentId', async (req, res) => {
       }
     });
 
+    console.log('✅ Agent details retrieved successfully');
     res.json(response.data);
     
   } catch (error) {
     console.error('❌ Error getting agent:', error.response?.data || error.message);
+    console.error('❌ Full error details:', JSON.stringify(error.response?.data, null, 2));
     res.status(error.response?.status || 500).json({
       error: 'Failed to get agent',
       details: error.response?.data || error.message
