@@ -109,7 +109,7 @@ class DIDAgentFinal {
             
             const initializeAgent = async (agentId) => {
                 try {
-                    console.log('🔑 Getting client key from backend...');
+                    console.log('🔑 Getting API key from backend...');
                     const response = await fetch(window.didAgentConfig.backendUrl + '/api/client-key', {
                         method: 'POST',
                         headers: {
@@ -132,7 +132,7 @@ class DIDAgentFinal {
                         throw new Error('No client key received from backend');
                     }
                     
-                    console.log('✅ Client key received successfully');
+                    console.log('✅ API key received successfully');
                     
                     // Redirect all D-ID API calls to our backend
                     const originalFetch = window.fetch;
@@ -167,11 +167,13 @@ class DIDAgentFinal {
                         throw new Error('Container not found');
                     }
                     
-                    // Create agent manager with minimal required config
+                    // Create agent manager with required config
                     const agentManager = await window.createAgentManager({
                         agentId: agentId,
                         container: container,
-                        clientKey: clientKey,
+                        apiKey: clientKey, // Try apiKey instead of clientKey
+                        clientKey: clientKey, // Keep both for compatibility
+                        mixpanelKey: 'dummy-mixpanel-key', // Required by D-ID SDK
                         onSrcObjectReady: (stream) => {
                             console.log('📹 Video stream ready - forcing video element creation');
                             
