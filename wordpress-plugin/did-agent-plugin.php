@@ -230,6 +230,13 @@ class DIDAgentPlugin {
                                 return value;
                             },
                             
+                            onVideoStateChange: (state) => {
+                                console.log("Video State for agent", agentId, ":", state);
+                                if (state === "PLAYING") {
+                                    console.log("Video is now playing for agent:", agentId);
+                                }
+                            },
+                            
                             onConnectionStateChange: (state) => {
                                 console.log("Connection State for agent", agentId, ":", state);
                                 this.handleConnectionStateChange(container, elements, state, agentId);
@@ -269,6 +276,12 @@ class DIDAgentPlugin {
                         this.setupEventListeners(container, elements, agentManager, agentId);
                         this.hideLoading(container);
                         this.showInterface(container);
+                        
+                        // Test: Send a greeting message to start the agent
+                        setTimeout(() => {
+                            console.log("Sending test message to start agent...");
+                            agentManager.sendMessage("Hello! Can you introduce yourself?");
+                        }, 2000);
                     }
                     
                     getAgentElements(container, agentId) {
