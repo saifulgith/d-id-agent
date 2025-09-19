@@ -98,7 +98,7 @@ class DIDAgentProper {
             </div>
             
             <!-- D-ID SDK will create its professional interface here -->
-            <div id="sdk-container-<?php echo $agent_id; ?>" style="display: none; width: 100%; height: 100%;">
+            <div id="sdk-container-<?php echo $agent_id; ?>" style="width: 100%; height: 100%; position: relative;">
                 <!-- D-ID SDK professional interface will be injected here -->
             </div>
         </div>
@@ -228,6 +228,9 @@ class DIDAgentProper {
                 };
                 
                 // Create agent manager - D-ID SDK will create its professional interface
+                console.log('🎨 Creating agent manager with container:', sdkContainer);
+                console.log('🎨 Container dimensions:', sdkContainer.offsetWidth, 'x', sdkContainer.offsetHeight);
+                
                 const agentManager = await window.createAgentManager(agentId, {
                     auth,
                     callbacks,
@@ -235,11 +238,18 @@ class DIDAgentProper {
                     container: sdkContainer  // D-ID SDK will create its professional UI here
                 });
                 
+                console.log('✅ Agent manager created successfully');
+                
                 await agentManager.connect();
                 
                 // Hide loading and show SDK interface
                 loadingDiv.style.display = 'none';
                 sdkContainer.style.display = 'block';
+                sdkContainer.style.visibility = 'visible';
+                
+                // Force container to be visible for SDK
+                sdkContainer.style.opacity = '1';
+                sdkContainer.style.zIndex = '1';
                 
                 console.log('🎉 D-ID Agent with proper SDK interface is ready!');
                 
