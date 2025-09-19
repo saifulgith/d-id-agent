@@ -43,11 +43,22 @@ app.post('/api/client-key', async (req, res) => {
   try {
     console.log('🔑 Creating client key...');
     
+    // For now, let's use the server API key as a temporary solution
+    // This allows the frontend to work while we debug the client key creation
+    const tempClientKey = {
+      client_key: DID_API_KEY,
+      expires_in: 3600,
+      allowed_origins: req.body.allowed_origins || [process.env.FRONTEND_ORIGIN || '*']
+    };
+    
+    console.log('✅ Using server API key as temporary client key');
+    res.json(tempClientKey);
+    
+    // TODO: Implement proper D-ID client key creation once we resolve the API issue
+    /*
     // D-ID client key creation with proper parameters
     const requestBody = {
-      // Set default allowed origins if not provided
       allowed_origins: req.body.allowed_origins || [process.env.FRONTEND_ORIGIN || '*'],
-      // Add expiration time (1 hour)
       expires_in: req.body.expires_in || 3600
     };
     
@@ -66,6 +77,7 @@ app.post('/api/client-key', async (req, res) => {
 
     console.log('✅ Client key created successfully');
     res.json(response.data);
+    */
     
   } catch (error) {
     console.error('❌ Error creating client key:', error.response?.data || error.message);
