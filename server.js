@@ -329,15 +329,24 @@ app.use('/api/agents/:agentId/*', async (req, res) => {
     const targetUrl = `${DID_API_BASE}/agents/${agentId}/${subPath}`;
     
     console.log(`🔄 Proxying agent sub-route: ${req.method} ${req.originalUrl} -> ${targetUrl}`);
+    console.log(`🔑 Original Authorization header:`, req.headers.authorization);
 
-    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    // Use the original Authorization header from the D-ID SDK if available
+    // Otherwise fall back to our server API key
+    let authHeader;
+    if (req.headers.authorization) {
+      authHeader = req.headers.authorization;
+      console.log(`✅ Using D-ID SDK authorization header`);
+    } else {
+      const authString = Buffer.from(DID_API_KEY).toString('base64');
+      authHeader = `Basic ${authString}`;
+      console.log(`⚠️  Using fallback server API key`);
+    }
     
-    // Remove any existing authorization header from the request
+    // Prepare headers - keep original headers but ensure proper auth
     const headers = { ...req.headers };
-    delete headers.authorization;
-    delete headers.Authorization;
+    headers['Authorization'] = authHeader;
     
-    // Add proper D-ID authentication
     const response = await axios({
       method: req.method,
       url: targetUrl,
@@ -345,7 +354,6 @@ app.use('/api/agents/:agentId/*', async (req, res) => {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${authString}`,
         ...headers
       },
       params: req.query
