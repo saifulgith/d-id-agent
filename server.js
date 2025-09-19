@@ -51,14 +51,14 @@ app.post('/api/client-key', async (req, res) => {
       allowed_origins: req.body.allowed_origins || [process.env.FRONTEND_ORIGIN || '*']
     };
     
+    // D-ID uses Basic Auth with email:apikey format
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    
     const response = await axios.post(`${DID_API_BASE}/agents/client-key`, requestBody, {
-      auth: {
-        username: DID_API_KEY,
-        password: ''
-      },
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${authString}`
       }
     });
 
@@ -79,14 +79,13 @@ app.post('/api/agents', async (req, res) => {
   try {
     console.log('🤖 Creating new agent...');
     
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    
     const response = await axios.post(`${DID_API_BASE}/agents`, req.body, {
-      auth: {
-        username: DID_API_KEY,
-        password: ''
-      },
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${authString}`
       }
     });
 
@@ -108,13 +107,12 @@ app.get('/api/agents/:agentId', async (req, res) => {
     const { agentId } = req.params;
     console.log(`🔍 Getting agent details for: ${agentId}`);
     
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    
     const response = await axios.get(`${DID_API_BASE}/agents/${agentId}`, {
-      auth: {
-        username: DID_API_KEY,
-        password: ''
-      },
       headers: {
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Authorization': `Basic ${authString}`
       }
     });
 
@@ -135,14 +133,13 @@ app.post('/api/agents/:agentId/streams', async (req, res) => {
     const { agentId } = req.params;
     console.log(`🎥 Creating stream for agent: ${agentId}`);
     
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    
     const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/streams`, req.body, {
-      auth: {
-        username: DID_API_KEY,
-        password: ''
-      },
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${authString}`
       }
     });
 
@@ -164,13 +161,12 @@ app.get('/api/agents/:agentId/streams', async (req, res) => {
     const { agentId } = req.params;
     console.log(`📋 Getting streams for agent: ${agentId}`);
     
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    
     const response = await axios.get(`${DID_API_BASE}/agents/${agentId}/streams`, {
-      auth: {
-        username: DID_API_KEY,
-        password: ''
-      },
       headers: {
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Authorization': `Basic ${authString}`
       }
     });
 
