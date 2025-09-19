@@ -27,41 +27,33 @@ class DIDAgentFinal {
     }
     
     public function enqueue_scripts() {
-        // Load D-ID SDK as UMD build - VERSION 2.0
+        // Load D-ID SDK as ES module - VERSION 3.0
         wp_add_inline_script('jquery', '
-            console.log("🚀 D-ID Agent Final V2.0 - Loading UMD SDK");
+            console.log("🚀 D-ID Agent Final V3.0 - Loading ES Module SDK");
             
-            // Load D-ID SDK as UMD build
+            // Load D-ID SDK as ES module with proper global exposure
             const script = document.createElement("script");
-            script.src = "https://unpkg.com/@d-id/client-sdk@latest/dist/index.umd.js?v=2.0";
-            script.onload = function() {
-                console.log("✅ D-ID SDK loaded as UMD V2.0");
+            script.type = "module";
+            script.innerHTML = `
+                import * as sdk from "https://cdn.jsdelivr.net/npm/@d-id/client-sdk@latest/dist/index.js";
+                
+                // Make SDK available globally with proper exposure
+                window.createAgentManager = sdk.createAgentManager;
+                window.StreamType = sdk.StreamType;
+                window.AgentsUI = sdk.AgentsUI;
+                window.DID = sdk;
+                
+                console.log("✅ D-ID SDK loaded as ES module V3.0");
                 console.log("✅ Available classes:", {
                     createAgentManager: !!window.createAgentManager,
                     StreamType: !!window.StreamType,
                     AgentsUI: !!window.AgentsUI,
                     DID: !!window.DID
                 });
-            };
-            script.onerror = function() {
-                console.error("❌ Failed to load D-ID SDK UMD from unpkg, trying jsdelivr...");
-                // Try fallback CDN
-                const fallbackScript = document.createElement("script");
-                fallbackScript.src = "https://cdn.jsdelivr.net/npm/@d-id/client-sdk@latest/dist/index.umd.js?v=2.1";
-                fallbackScript.onload = function() {
-                    console.log("✅ D-ID SDK loaded as UMD V2.1 from jsdelivr");
-                    console.log("✅ Available classes:", {
-                        createAgentManager: !!window.createAgentManager,
-                        StreamType: !!window.StreamType,
-                        AgentsUI: !!window.AgentsUI,
-                        DID: !!window.DID
-                    });
-                };
-                fallbackScript.onerror = function() {
-                    console.error("❌ Failed to load D-ID SDK UMD from both CDNs");
-                };
-                document.head.appendChild(fallbackScript);
-            };
+                
+                // Trigger a custom event to notify that SDK is ready
+                window.dispatchEvent(new CustomEvent("did-sdk-ready"));
+            `;
             document.head.appendChild(script);
             
             // Configure D-ID SDK
@@ -117,9 +109,11 @@ class DIDAgentFinal {
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Initializing D-ID Agent Final:', '<?php echo $agent_id; ?>');
             
-            // Wait for SDK to load
+            // Wait for SDK to load using custom event
+            let sdkReady = false;
+            
             const waitForSDK = () => {
-                if ((window.createAgentManager || window.AgentsUI || window.DID?.AgentsUI) && window.StreamType) {
+                if (sdkReady && (window.createAgentManager || window.AgentsUI || window.DID?.AgentsUI) && window.StreamType) {
                     console.log('✅ D-ID SDK loaded successfully');
                     console.log('✅ Available classes:', {
                         createAgentManager: !!window.createAgentManager,
@@ -133,6 +127,12 @@ class DIDAgentFinal {
                     setTimeout(waitForSDK, 100);
                 }
             };
+            
+            // Listen for SDK ready event
+            window.addEventListener('did-sdk-ready', function() {
+                console.log('🎉 D-ID SDK ready event received!');
+                sdkReady = true;
+            });
             
             const initializeAgent = async (agentId) => {
                 try {
