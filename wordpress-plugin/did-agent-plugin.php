@@ -289,7 +289,15 @@ class DIDAgentPlugin {
                         // Test: Send a greeting message to start the agent
                         setTimeout(() => {
                             console.log("Sending test message to start agent...");
-                            agentManager.sendMessage("Hello! Can you introduce yourself?");
+                            console.log("Agent manager methods:", Object.keys(agentManager));
+                            
+                            // Use the same pattern as handleAction method
+                            try {
+                                agentManager.chat("Hello! Can you introduce yourself?");
+                                console.log("Test chat message sent successfully");
+                            } catch (error) {
+                                console.error("Error sending test chat message:", error);
+                            }
                         }, 2000);
                     }
                     
