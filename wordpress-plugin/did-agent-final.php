@@ -40,7 +40,12 @@ class DIDAgentFinal {
                 window.StreamType = sdk.StreamType;
                 window.AgentsUI = sdk.AgentsUI;
                 
+                // Also try alternative names
+                window.DID = sdk;
+                window.DidAgent = sdk.AgentsUI;
+                
                 console.log("✅ D-ID SDK loaded as ES module");
+                console.log("✅ Available classes:", Object.keys(sdk));
             `;
             document.head.appendChild(script);
             
@@ -99,8 +104,14 @@ class DIDAgentFinal {
             
             // Wait for SDK to load
             const waitForSDK = () => {
-                if (window.AgentsUI && window.StreamType) {
+                if ((window.AgentsUI || window.DidAgent || window.DID?.AgentsUI) && window.StreamType) {
                     console.log('✅ D-ID SDK loaded successfully');
+                    console.log('✅ Available classes:', {
+                        AgentsUI: !!window.AgentsUI,
+                        DidAgent: !!window.DidAgent,
+                        DID: !!window.DID,
+                        StreamType: !!window.StreamType
+                    });
                     initializeAgent('<?php echo $agent_id; ?>');
                 } else {
                     console.log('⏳ Waiting for D-ID SDK...');
@@ -161,15 +172,23 @@ class DIDAgentFinal {
                         return new originalWebSocket(url, protocols);
                     };
                     
-                    console.log('🎨 Creating D-ID Agent with AgentsUI...');
+                    console.log('🎨 Creating D-ID Agent...');
                     
                     const container = document.getElementById('sdk-container-' + agentId);
                     if (!container) {
                         throw new Error('Container not found');
                     }
                     
-                    // Create agent with AgentsUI (simpler approach)
-                    const agent = new window.AgentsUI({
+                    // Try different class names
+                    let AgentClass = window.AgentsUI || window.DidAgent || window.DID?.AgentsUI;
+                    if (!AgentClass) {
+                        throw new Error('No D-ID Agent class found');
+                    }
+                    
+                    console.log('✅ Using Agent class:', AgentClass.name || 'Unknown');
+                    
+                    // Create agent with the available class
+                    const agent = new AgentClass({
                         agentId: agentId,
                         container: container,
                         clientKey: clientKey
