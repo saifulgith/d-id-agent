@@ -331,11 +331,18 @@ app.use('/api/agents/:agentId/*', async (req, res) => {
     console.log(`🔄 Proxying agent sub-route: ${req.method} ${req.originalUrl} -> ${targetUrl}`);
     console.log(`🔑 Original Authorization header:`, req.headers.authorization);
 
-    // Always use our server API key for D-ID API calls
-    // The D-ID SDK sends client keys, but D-ID API expects Basic Auth
-    const authString = Buffer.from(DID_API_KEY).toString('base64');
-    const authHeader = `Basic ${authString}`;
-    console.log(`🔑 Using server API key for D-ID API call`);
+    // Conditional auth: Use client key for signaling routes, server key for management
+    let authHeader;
+    if (subPath.includes('sdp') || subPath.includes('ice')) {
+      // For WebRTC signaling (SDP, ICE), keep the client key from frontend
+      authHeader = req.headers.authorization;
+      console.log(`🔑 Using client key for signaling route: ${subPath}`);
+    } else {
+      // For management endpoints, use server API key
+      const authString = Buffer.from(DID_API_KEY).toString('base64');
+      authHeader = `Basic ${authString}`;
+      console.log(`🔑 Using server API key for management route: ${subPath}`);
+    }
     
     // Prepare headers - keep original headers but ensure proper auth
     const headers = { ...req.headers };
@@ -371,13 +378,12 @@ app.post('/api/agents/:agentId/streams/:streamId/sdp', async (req, res) => {
     const { agentId, streamId } = req.params;
     console.log(`🎥 SDP exchange for agent: ${agentId}, stream: ${streamId}`);
     
-    const authString = Buffer.from(DID_API_KEY).toString('base64');
-    
+    // Use client key for SDP signaling
     const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/streams/${streamId}/sdp`, req.body, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${authString}`
+        'Authorization': req.headers.authorization // Keep client key!
       }
     });
 
@@ -399,13 +405,12 @@ app.post('/api/agents/:agentId/streams/:streamId/ice', async (req, res) => {
     const { agentId, streamId } = req.params;
     console.log(`🧊 ICE candidate for agent: ${agentId}, stream: ${streamId}`);
     
-    const authString = Buffer.from(DID_API_KEY).toString('base64');
-    
+    // Use client key for ICE signaling
     const response = await axios.post(`${DID_API_BASE}/agents/${agentId}/streams/${streamId}/ice`, req.body, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${authString}`
+        'Authorization': req.headers.authorization // Keep client key!
       }
     });
 
