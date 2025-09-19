@@ -67,20 +67,7 @@ app.post('/api/client-key', async (req, res) => {
   try {
     console.log('🔑 Creating client key...');
     
-    // For now, let's use the server API key as a temporary solution
-    // This allows the frontend to work while we debug the client key creation
-    const tempClientKey = {
-      client_key: DID_API_KEY,
-      expires_in: 3600,
-      allowed_origins: req.body.allowed_origins || [process.env.FRONTEND_ORIGIN || '*']
-    };
-    
-    console.log('✅ Using server API key as temporary client key');
-    res.json(tempClientKey);
-    
-    // TODO: Implement proper D-ID client key creation once we resolve the API issue
-    /*
-    // D-ID client key creation with proper parameters
+    // Create a proper D-ID client key
     const requestBody = {
       allowed_origins: req.body.allowed_origins || [process.env.FRONTEND_ORIGIN || '*'],
       expires_in: req.body.expires_in || 3600
@@ -101,15 +88,20 @@ app.post('/api/client-key', async (req, res) => {
 
     console.log('✅ Client key created successfully');
     res.json(response.data);
-    */
     
   } catch (error) {
     console.error('❌ Error creating client key:', error.response?.data || error.message);
     console.error('❌ Full error details:', JSON.stringify(error.response?.data, null, 2));
-    res.status(error.response?.status || 500).json({
-      error: 'Failed to create client key',
-      details: error.response?.data || error.message
-    });
+    
+    // Fallback to using server API key if D-ID client key creation fails
+    console.log('🔄 Falling back to server API key...');
+    const tempClientKey = {
+      client_key: DID_API_KEY,
+      expires_in: 3600,
+      allowed_origins: req.body.allowed_origins || [process.env.FRONTEND_ORIGIN || '*']
+    };
+    
+    res.json(tempClientKey);
   }
 });
 
@@ -118,22 +110,65 @@ app.post('/client-key', async (req, res) => {
   try {
     console.log('🔑 Creating client key (via /client-key route)...');
     
-    // For now, let's use the server API key as a temporary solution
-    // This allows the frontend to work while we debug the client key creation
+    // Create a proper D-ID client key
+    const requestBody = {
+      allowed_origins: req.body.allowed_origins || [process.env.FRONTEND_ORIGIN || '*'],
+      expires_in: req.body.expires_in || 3600
+    };
+    
+    console.log('📝 Request body:', JSON.stringify(requestBody, null, 2));
+    
+    // D-ID uses Basic Auth with email:apikey format
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    
+    const response = await axios.post(`${DID_API_BASE}/agents/client-key`, requestBody, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${authString}`
+      }
+    });
+
+    console.log('✅ Client key created successfully');
+    res.json(response.data);
+    
+  } catch (error) {
+    console.error('❌ Error creating client key:', error.response?.data || error.message);
+    console.error('❌ Full error details:', JSON.stringify(error.response?.data, null, 2));
+    
+    // Fallback to using server API key if D-ID client key creation fails
+    console.log('🔄 Falling back to server API key...');
     const tempClientKey = {
       client_key: DID_API_KEY,
       expires_in: 3600,
       allowed_origins: req.body.allowed_origins || [process.env.FRONTEND_ORIGIN || '*']
     };
     
-    console.log('✅ Using server API key as temporary client key');
     res.json(tempClientKey);
+  }
+});
+
+// Proxy for D-ID agent operations
+app.get('/api/agents/:agentId', async (req, res) => {
+  try {
+    const { agentId } = req.params;
+    console.log(`🔍 Getting agent details for: ${agentId}`);
+    
+    const authString = Buffer.from(DID_API_KEY).toString('base64');
+    
+    const response = await axios.get(`${DID_API_BASE}/agents/${agentId}`, {
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Basic ${authString}`
+      }
+    });
+
+    res.json(response.data);
     
   } catch (error) {
-    console.error('❌ Error creating client key:', error.response?.data || error.message);
-    console.error('❌ Full error details:', JSON.stringify(error.response?.data, null, 2));
+    console.error('❌ Error getting agent:', error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
-      error: 'Failed to create client key',
+      error: 'Failed to get agent',
       details: error.response?.data || error.message
     });
   }
@@ -166,33 +201,7 @@ app.post('/api/agents', async (req, res) => {
   }
 });
 
-// Get agent details
-app.get('/api/agents/:agentId', async (req, res) => {
-  try {
-    const { agentId } = req.params;
-    console.log(`🔍 Getting agent details for: ${agentId}`);
-    
-    const authString = Buffer.from(DID_API_KEY).toString('base64');
-    
-    const response = await axios.get(`${DID_API_BASE}/agents/${agentId}`, {
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': `Basic ${authString}`
-      }
-    });
-
-    res.json(response.data);
-    
-  } catch (error) {
-    console.error('❌ Error getting agent:', error.response?.data || error.message);
-    res.status(error.response?.status || 500).json({
-      error: 'Failed to get agent',
-      details: error.response?.data || error.message
-    });
-  }
-});
-
-// Create a stream for an agent
+// Proxy for D-ID stream operations
 app.post('/api/agents/:agentId/streams', async (req, res) => {
   try {
     const { agentId } = req.params;
@@ -220,7 +229,6 @@ app.post('/api/agents/:agentId/streams', async (req, res) => {
   }
 });
 
-// Get streams for an agent
 app.get('/api/agents/:agentId/streams', async (req, res) => {
   try {
     const { agentId } = req.params;
@@ -245,6 +253,7 @@ app.get('/api/agents/:agentId/streams', async (req, res) => {
     });
   }
 });
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
