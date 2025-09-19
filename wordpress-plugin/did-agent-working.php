@@ -191,6 +191,8 @@ class DIDAgentWorking {
                 const callbacks = {
                     onSrcObjectReady: (value) => {
                         console.log('📹 Video stream ready - forcing video element creation');
+                        console.log('📹 Stream value:', value);
+                        console.log('📹 Stream tracks:', value ? value.getTracks() : 'No stream');
                         
                         // Force video element creation if SDK doesn't create it
                         if (!sdkContainer.querySelector('video')) {
@@ -216,6 +218,13 @@ class DIDAgentWorking {
                             video.playsInline = true;
                             video.srcObject = value;
                             console.log('✅ Updated existing video element with proper attributes');
+                            
+                            // Force play immediately
+                            video.play().then(() => {
+                                console.log('✅ Video started playing from stream');
+                            }).catch(err => {
+                                console.warn('⚠️ Video play from stream failed:', err);
+                            });
                         }
                         
                         return value;
@@ -302,6 +311,16 @@ class DIDAgentWorking {
                             video.autoplay = true;
                             video.playsInline = true;
                             
+                            // Debug video stream
+                            console.log('🔍 Video srcObject:', video.srcObject);
+                            if (video.srcObject) {
+                                console.log('🔍 Stream tracks:', video.srcObject.getTracks());
+                                console.log('🔍 Video tracks:', video.srcObject.getVideoTracks());
+                                console.log('🔍 Audio tracks:', video.srcObject.getAudioTracks());
+                            } else {
+                                console.log('⚠️ No stream attached (srcObject is null)');
+                            }
+                            
                             // Try to play the video
                             video.play().then(() => {
                                 console.log('✅ Video started playing successfully');
@@ -313,6 +332,29 @@ class DIDAgentWorking {
                         }
                     }
                 }, 3000);
+                
+                // Additional debugging - check for video stream every 2 seconds
+                const debugInterval = setInterval(() => {
+                    const video = sdkContainer.querySelector('video');
+                    if (video) {
+                        console.log('🔍 Debug - Video srcObject:', video.srcObject);
+                        if (video.srcObject) {
+                            console.log('🔍 Debug - Stream tracks:', video.srcObject.getTracks().length);
+                            console.log('🔍 Debug - Video readyState:', video.readyState);
+                            console.log('🔍 Debug - Video paused:', video.paused);
+                            
+                            // If we have a stream but video is paused, try to play
+                            if (video.srcObject && video.paused) {
+                                video.play().catch(e => console.log('Debug - Play failed:', e));
+                            }
+                        }
+                    }
+                }, 2000);
+                
+                // Stop debugging after 30 seconds
+                setTimeout(() => {
+                    clearInterval(debugInterval);
+                }, 30000);
                 
             } catch (error) {
                 console.error('❌ Failed to initialize agent:', error);
