@@ -26,7 +26,7 @@ class DIDAgentProper {
     }
     
     public function enqueue_scripts() {
-        // Load D-ID SDK
+        // Load D-ID SDK as ES module
         wp_enqueue_script(
             'did-sdk',
             'https://cdn.jsdelivr.net/npm/@d-id/client-sdk@latest/dist/index.js',
@@ -35,8 +35,22 @@ class DIDAgentProper {
             true
         );
         
-        // Add inline script for D-ID SDK configuration
+        // Add inline script to load D-ID SDK as ES module
         wp_add_inline_script('did-sdk', '
+            // Load D-ID SDK as ES module
+            const script = document.createElement("script");
+            script.type = "module";
+            script.innerHTML = `
+                import * as sdk from "https://cdn.jsdelivr.net/npm/@d-id/client-sdk@latest/dist/index.js";
+                
+                // Make SDK available globally
+                window.createAgentManager = sdk.createAgentManager;
+                window.StreamType = sdk.StreamType;
+                
+                console.log("✅ D-ID SDK loaded as ES module");
+            `;
+            document.head.appendChild(script);
+            
             // Configure D-ID SDK
             window.didAgentConfig = {
                 backendUrl: "' . esc_js($this->backend_url) . '",
