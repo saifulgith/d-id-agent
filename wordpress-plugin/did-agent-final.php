@@ -33,7 +33,7 @@ class DIDAgentFinal {
             
             // Load D-ID SDK as UMD build
             const script = document.createElement("script");
-            script.src = "https://cdn.jsdelivr.net/npm/@d-id/client-sdk@latest/dist/index.umd.js?v=2.0";
+            script.src = "https://unpkg.com/@d-id/client-sdk@latest/dist/index.umd.js?v=2.0";
             script.onload = function() {
                 console.log("✅ D-ID SDK loaded as UMD V2.0");
                 console.log("✅ Available classes:", {
@@ -44,7 +44,23 @@ class DIDAgentFinal {
                 });
             };
             script.onerror = function() {
-                console.error("❌ Failed to load D-ID SDK UMD");
+                console.error("❌ Failed to load D-ID SDK UMD from unpkg, trying jsdelivr...");
+                // Try fallback CDN
+                const fallbackScript = document.createElement("script");
+                fallbackScript.src = "https://cdn.jsdelivr.net/npm/@d-id/client-sdk@latest/dist/index.umd.js?v=2.1";
+                fallbackScript.onload = function() {
+                    console.log("✅ D-ID SDK loaded as UMD V2.1 from jsdelivr");
+                    console.log("✅ Available classes:", {
+                        createAgentManager: !!window.createAgentManager,
+                        StreamType: !!window.StreamType,
+                        AgentsUI: !!window.AgentsUI,
+                        DID: !!window.DID
+                    });
+                };
+                fallbackScript.onerror = function() {
+                    console.error("❌ Failed to load D-ID SDK UMD from both CDNs");
+                };
+                document.head.appendChild(fallbackScript);
             };
             document.head.appendChild(script);
             
