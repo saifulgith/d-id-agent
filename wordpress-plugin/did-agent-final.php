@@ -27,26 +27,20 @@ class DIDAgentFinal {
     }
     
     public function enqueue_scripts() {
-        // Load D-ID SDK as ES module
+        // Load D-ID SDK as UMD build
         wp_add_inline_script('jquery', '
-            // Load D-ID SDK as ES module
+            // Load D-ID SDK as UMD build
             const script = document.createElement("script");
-            script.type = "module";
-            script.innerHTML = `
-                import * as sdk from "https://cdn.jsdelivr.net/npm/@d-id/client-sdk@latest/dist/index.js";
-                
-                // Make SDK available globally
-                window.createAgentManager = sdk.createAgentManager;
-                window.StreamType = sdk.StreamType;
-                window.AgentsUI = sdk.AgentsUI;
-                
-                // Also try alternative names
-                window.DID = sdk;
-                window.DidAgent = sdk.AgentsUI;
-                
-                console.log("✅ D-ID SDK loaded as ES module");
-                console.log("✅ Available classes:", Object.keys(sdk));
-            `;
+            script.src = "https://cdn.jsdelivr.net/npm/@d-id/client-sdk@latest/dist/index.umd.js";
+            script.onload = function() {
+                console.log("✅ D-ID SDK loaded as UMD");
+                console.log("✅ Available classes:", {
+                    createAgentManager: !!window.createAgentManager,
+                    StreamType: !!window.StreamType,
+                    AgentsUI: !!window.AgentsUI,
+                    DID: !!window.DID
+                });
+            };
             document.head.appendChild(script);
             
             // Configure D-ID SDK
@@ -104,11 +98,11 @@ class DIDAgentFinal {
             
             // Wait for SDK to load
             const waitForSDK = () => {
-                if ((window.AgentsUI || window.DidAgent || window.DID?.AgentsUI) && window.StreamType) {
+                if ((window.createAgentManager || window.AgentsUI || window.DID?.AgentsUI) && window.StreamType) {
                     console.log('✅ D-ID SDK loaded successfully');
                     console.log('✅ Available classes:', {
+                        createAgentManager: !!window.createAgentManager,
                         AgentsUI: !!window.AgentsUI,
-                        DidAgent: !!window.DidAgent,
                         DID: !!window.DID,
                         StreamType: !!window.StreamType
                     });
@@ -172,43 +166,50 @@ class DIDAgentFinal {
                         return new originalWebSocket(url, protocols);
                     };
                     
-                    console.log('🎨 Creating D-ID Agent...');
+                    console.log('🎨 Creating D-ID Agent Manager...');
                     
                     const container = document.getElementById('sdk-container-' + agentId);
                     if (!container) {
                         throw new Error('Container not found');
                     }
                     
-                    // Try different class names
-                    let AgentClass = window.AgentsUI || window.DidAgent || window.DID?.AgentsUI;
-                    if (!AgentClass) {
-                        throw new Error('No D-ID Agent class found');
-                    }
-                    
-                    console.log('✅ Using Agent class:', AgentClass.name || 'Unknown');
-                    
-                    // Create agent with the available class
-                    const agent = new AgentClass({
+                    // Use createAgentManager (the correct approach)
+                    const agentManager = await window.createAgentManager({
                         agentId: agentId,
                         container: container,
-                        clientKey: clientKey
+                        clientKey: clientKey,
+                        onSrcObjectReady: (stream) => {
+                            console.log('📹 Video stream ready');
+                            hideLoading(agentId);
+                        },
+                        onVideoStateChange: (state) => {
+                            console.log('📹 Video state:', state);
+                            if (state === 'START') {
+                                hideLoading(agentId);
+                            }
+                        },
+                        onConnectionStateChange: (state) => {
+                            console.log('🔗 Connection state:', state);
+                            if (state === 'connected') {
+                                console.log('✅ Agent connected successfully!');
+                                // Send greeting after connection
+                                setTimeout(() => {
+                                    console.log('👋 Sending greeting message...');
+                                    agentManager.chat('Hello, how can I help you today?');
+                                }, 1000);
+                            }
+                        },
+                        onNewMessage: (message) => {
+                            console.log('💬 New message:', message);
+                        },
+                        onError: (error) => {
+                            console.error('❌ Agent error:', error);
+                            showError(agentId);
+                        }
                     });
                     
-                    // Connect the agent
-                    await agent.connect();
-                    console.log('✅ Agent connected successfully!');
-                    
-                    // Send greeting after connection
-                    setTimeout(() => {
-                        console.log('👋 Sending greeting message...');
-                        agent.say('Hello, how can I help you today?');
-                    }, 1000);
-                    
-                    console.log('✅ Agent created successfully');
+                    console.log('✅ Agent manager created successfully');
                     console.log('🎉 D-ID Agent Final is ready!');
-                    
-                    // Hide loading
-                    hideLoading(agentId);
                     
                 } catch (error) {
                     console.error('❌ Failed to initialize agent:', error);
