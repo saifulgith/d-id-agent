@@ -14,47 +14,83 @@
             const results = document.getElementById('results');
             
             try {
-                status.textContent = 'Testing direct D-ID API...';
+                status.textContent = 'Testing backend proxy...';
                 
-                // Test 1: Health check
-                const healthResponse = await fetch('https://api.d-id.com/');
-                const healthData = await healthResponse.text();
-                results.innerHTML += '<h3>Health Check:</h3><pre>' + healthData + '</pre>';
-                
-                // Test 2: Agent info (this will fail without auth, but we can see the response)
+                // Test 1: Our proxy health
                 try {
-                    const agentResponse = await fetch('https://api.d-id.com/agents/v2_agt_aKkqeO6X');
-                    const agentData = await agentResponse.text();
-                    results.innerHTML += '<h3>Agent Info (no auth):</h3><pre>' + agentData + '</pre>';
+                    const proxyHealthResponse = await fetch('https://d-id-agent-1sdx.onrender.com/');
+                    const proxyHealthData = await proxyHealthResponse.text();
+                    results.innerHTML += '<h3>✅ Proxy Health:</h3><pre>' + proxyHealthData + '</pre>';
                 } catch (e) {
-                    results.innerHTML += '<h3>Agent Info (no auth):</h3><pre>Expected error: ' + e.message + '</pre>';
+                    results.innerHTML += '<h3>❌ Proxy Health Error:</h3><pre>' + e.message + '</pre>';
                 }
                 
-                // Test 3: Our proxy health
-                const proxyHealthResponse = await fetch('https://d-id-agent-1sdx.onrender.com/');
-                const proxyHealthData = await proxyHealthResponse.text();
-                results.innerHTML += '<h3>Proxy Health:</h3><pre>' + proxyHealthData + '</pre>';
+                // Test 2: Our proxy client key
+                try {
+                    const clientKeyResponse = await fetch('https://d-id-agent-1sdx.onrender.com/api/client-key', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            agentId: 'v2_agt_aKkqeO6X',
+                            allowed_domains: [window.location.origin]
+                        })
+                    });
+                    
+                    if (clientKeyResponse.ok) {
+                        const clientKeyData = await clientKeyResponse.json();
+                        results.innerHTML += '<h3>✅ Proxy Client Key:</h3><pre>' + JSON.stringify(clientKeyData, null, 2) + '</pre>';
+                    } else {
+                        const errorText = await clientKeyResponse.text();
+                        results.innerHTML += '<h3>❌ Proxy Client Key Error:</h3><pre>Status: ' + clientKeyResponse.status + '\nResponse: ' + errorText + '</pre>';
+                    }
+                } catch (e) {
+                    results.innerHTML += '<h3>❌ Proxy Client Key Error:</h3><pre>' + e.message + '</pre>';
+                }
                 
-                // Test 4: Our proxy client key
-                const clientKeyResponse = await fetch('https://d-id-agent-1sdx.onrender.com/api/client-key', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        agentId: 'v2_agt_aKkqeO6X',
-                        allowed_domains: [window.location.origin]
-                    })
-                });
-                const clientKeyData = await clientKeyResponse.text();
-                results.innerHTML += '<h3>Proxy Client Key:</h3><pre>' + clientKeyData + '</pre>';
+                // Test 3: Test agent endpoint
+                try {
+                    const agentResponse = await fetch('https://d-id-agent-1sdx.onrender.com/api/agents/v2_agt_aKkqeO6X');
+                    if (agentResponse.ok) {
+                        const agentData = await agentResponse.text();
+                        results.innerHTML += '<h3>✅ Agent Endpoint:</h3><pre>' + agentData + '</pre>';
+                    } else {
+                        const errorText = await agentResponse.text();
+                        results.innerHTML += '<h3>⚠️ Agent Endpoint (Expected Error):</h3><pre>Status: ' + agentResponse.status + '\nResponse: ' + errorText + '</pre>';
+                    }
+                } catch (e) {
+                    results.innerHTML += '<h3>❌ Agent Endpoint Error:</h3><pre>' + e.message + '</pre>';
+                }
                 
-                status.textContent = 'Tests completed!';
+                // Test 4: Test streams endpoint
+                try {
+                    const streamsResponse = await fetch('https://d-id-agent-1sdx.onrender.com/api/agents/v2_agt_aKkqeO6X/streams', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({})
+                    });
+                    
+                    if (streamsResponse.ok) {
+                        const streamsData = await streamsResponse.json();
+                        results.innerHTML += '<h3>✅ Streams Endpoint:</h3><pre>' + JSON.stringify(streamsData, null, 2) + '</pre>';
+                    } else {
+                        const errorText = await streamsResponse.text();
+                        results.innerHTML += '<h3>⚠️ Streams Endpoint (Expected Error):</h3><pre>Status: ' + streamsResponse.status + '\nResponse: ' + errorText + '</pre>';
+                    }
+                } catch (e) {
+                    results.innerHTML += '<h3>❌ Streams Endpoint Error:</h3><pre>' + e.message + '</pre>';
+                }
+                
+                status.textContent = 'Backend tests completed!';
                 
             } catch (error) {
                 status.textContent = 'Error: ' + error.message;
-                results.innerHTML += '<h3>Error:</h3><pre>' + error.message + '</pre>';
+                results.innerHTML += '<h3>❌ General Error:</h3><pre>' + error.message + '</pre>';
             }
         }
         
