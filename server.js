@@ -392,6 +392,7 @@ app.use('/api/agents/:agentId/*', async (req, res) => {
     
     console.log(`🔄 Proxying agent sub-route: ${req.method} ${req.originalUrl} -> ${targetUrl}`);
     console.log(`🔑 Original Authorization header:`, req.headers.authorization);
+    console.log(`🔑 Request body:`, JSON.stringify(req.body, null, 2));
     console.log(`🔑 All headers:`, req.headers);
 
     // Use server API key for ALL operations - client keys seem to have issues with chat sessions
@@ -400,26 +401,27 @@ app.use('/api/agents/:agentId/*', async (req, res) => {
     console.log(`🔑 Using server API key for all routes: ${subPath}`);
     
     // Prepare headers - keep original headers but ensure proper auth
-    const headers = { ...req.headers };
-    headers['Authorization'] = authHeader;
+    const headers = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': authHeader
+    };
     
     const response = await axios({
       method: req.method,
       url: targetUrl,
       data: req.body,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        ...headers
-      },
+      headers: headers,
       params: req.query
     });
 
-    console.log(`✅ Proxied successfully: ${req.method} ${req.originalUrl}`);
+    console.log(`✅ Proxied successfully: ${req.method} ${req.originalUrl} -> ${response.status}`);
     res.json(response.data);
 
   } catch (error) {
     console.error(`❌ Proxy error for ${req.method} ${req.originalUrl}:`, error.response?.data || error.message);
+    console.error(`❌ Error status:`, error.response?.status);
+    console.error(`❌ Error headers:`, error.response?.headers);
     res.status(error.response?.status || 500).json({
       error: 'Proxy request failed',
       details: error.response?.data || error.message
