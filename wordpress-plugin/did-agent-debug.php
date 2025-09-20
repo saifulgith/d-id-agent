@@ -85,24 +85,41 @@ class DIDAgentDebug {
                         
                         // Test the agent endpoint directly
                         console.log("🧪 Testing agent endpoint directly...");
-                        const agentResponse = await fetch(backendUrl + "/api/agents/v2_agt_aKkqeO6X", {
-                            method: "GET",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "Accept": "application/json",
-                                "Client-Key": clientKey,
-                                "Authorization": "Basic " + btoa(clientKey + ":")
-                            }
+                        console.log("🧪 Request URL:", backendUrl + "/api/agents/v2_agt_aKkqeO6X");
+                        console.log("🧪 Request headers:", {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json",
+                            "Client-Key": clientKey,
+                            "Authorization": "Basic " + btoa(clientKey + ":")
                         });
                         
-                        console.log("🧪 Agent endpoint response status:", agentResponse.status);
-                        
-                        if (agentResponse.ok) {
-                            const agentData = await agentResponse.json();
-                            console.log("🧪 Agent data received:", agentData);
-                        } else {
-                            const errorText = await agentResponse.text();
-                            console.error("🧪 Agent endpoint failed:", agentResponse.status, errorText);
+                        try {
+                            const agentResponse = await fetch(backendUrl + "/api/agents/v2_agt_aKkqeO6X", {
+                                method: "GET",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "Accept": "application/json",
+                                    "Client-Key": clientKey,
+                                    "Authorization": "Basic " + btoa(clientKey + ":")
+                                }
+                            });
+                            
+                            console.log("🧪 Agent endpoint response status:", agentResponse.status);
+                            console.log("🧪 Agent endpoint response headers:", agentResponse.headers);
+                            
+                            if (agentResponse.ok) {
+                                const agentData = await agentResponse.json();
+                                console.log("🧪 Agent data received:", agentData);
+                            } else {
+                                const errorText = await agentResponse.text();
+                                console.error("🧪 Agent endpoint failed:", agentResponse.status, errorText);
+                            }
+                        } catch (fetchError) {
+                            console.error("🧪 Fetch error details:", fetchError);
+                            console.error("🧪 Error name:", fetchError.name);
+                            console.error("🧪 Error message:", fetchError.message);
+                            console.error("🧪 Error stack:", fetchError.stack);
+                            throw fetchError;
                         }
                         
                         // Now try with the SDK
