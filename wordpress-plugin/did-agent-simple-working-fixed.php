@@ -76,8 +76,23 @@ class DIDAgentSimpleWorkingFixed {
                                 if (!options.headers) options.headers = {};
                                 options.headers["Client-Key"] = clientKey;
                                 options.headers["Authorization"] = "Basic " + btoa(clientKey + ":");
+                                options.headers["Content-Type"] = "application/json";
+                                options.headers["Accept"] = "application/json";
                             }
-                            return originalFetch.call(this, newUrl, options);
+                            
+                            console.log("🌐 Making fetch request to:", newUrl);
+                            return originalFetch.call(this, newUrl, options)
+                                .then(response => {
+                                    console.log("📡 Response status:", response.status, "for", newUrl);
+                                    if (!response.ok) {
+                                        console.error("❌ Fetch failed:", response.status, response.statusText);
+                                    }
+                                    return response;
+                                })
+                                .catch(error => {
+                                    console.error("❌ Fetch error for", newUrl, ":", error);
+                                    throw error;
+                                });
                         };
                         
                         // Redirect WebSocket connections
@@ -92,6 +107,7 @@ class DIDAgentSimpleWorkingFixed {
                         };
                         
                         // Create agent manager using official D-ID pattern
+                        console.log("🎨 Creating agent manager with client key:", clientKey.substring(0, 10) + "...");
                         const agentManager = await window.createAgentManager("v2_agt_aKkqeO6X", {
                             auth: { type: "key", clientKey: clientKey },
                             callbacks: {
