@@ -74,6 +74,9 @@ class DIDAgentWorkingFinal {
                         // Set up fetch interceptor to redirect D-ID API calls to backend
                         const originalFetch = window.fetch;
                         window.fetch = function(url, options = {}) {
+                            console.log("🌐 Fetch called:", url);
+                            console.log("🌐 Fetch options:", options);
+                            
                             let newUrl = url;
                             if (typeof url === "string" && url.includes("api.d-id.com")) {
                                 newUrl = url.replace("https://api.d-id.com", backendUrl + "/api");
@@ -84,17 +87,46 @@ class DIDAgentWorkingFinal {
                                 options.headers["Authorization"] = "Basic " + btoa(clientKey + ":");
                                 options.headers["Content-Type"] = "application/json";
                                 options.headers["Accept"] = "application/json";
+                                
+                                console.log("🔑 Headers added:", options.headers);
                             }
-                            return originalFetch.call(this, newUrl, options);
+                            
+                            return originalFetch.call(this, newUrl, options)
+                                .then(response => {
+                                    console.log("📡 Response for", newUrl, ":", response.status, response.statusText);
+                                    if (!response.ok) {
+                                        console.error("❌ Fetch failed for", newUrl, ":", response.status, response.statusText);
+                                    }
+                                    return response;
+                                })
+                                .catch(error => {
+                                    console.error("❌ Fetch error for", newUrl, ":", error);
+                                    throw error;
+                                });
                         };
                         
                         // Set up WebSocket interceptor
                         const originalWebSocket = window.WebSocket;
                         window.WebSocket = function(url, protocols) {
+                            console.log("🔌 WebSocket called:", url);
                             if (url.includes("notifications.d-id.com")) {
                                 const newUrl = url.replace("wss://notifications.d-id.com", backendUrl.replace("https://", "wss://") + "/api/notifications");
                                 console.log("🔄 Redirecting WebSocket:", url, "->", newUrl);
-                                return new originalWebSocket(newUrl, protocols);
+                                const ws = new originalWebSocket(newUrl, protocols);
+                                
+                                ws.addEventListener('open', () => {
+                                    console.log("🔌 WebSocket connected");
+                                });
+                                
+                                ws.addEventListener('error', (error) => {
+                                    console.error("🔌 WebSocket error:", error);
+                                });
+                                
+                                ws.addEventListener('close', (event) => {
+                                    console.log("🔌 WebSocket closed:", event.code, event.reason);
+                                });
+                                
+                                return ws;
                             }
                             return new originalWebSocket(url, protocols);
                         };
