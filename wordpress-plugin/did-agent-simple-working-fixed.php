@@ -48,7 +48,7 @@ class DIDAgentSimpleWorkingFixed {
                 async function initializeAgent() {
                     try {
                         console.log("🔑 Getting client key...");
-                        const backendUrl = "' . esc_js($this->backend_url) . '";
+                        const backendUrl = "https://d-id-agent-1sdx.onrender.com";
                         console.log("🌐 Backend URL:", backendUrl);
                         
                         // Test backend connectivity first
@@ -91,7 +91,7 @@ class DIDAgentSimpleWorkingFixed {
                         console.log("✅ Client key received");
                         
                         // Redirect all D-ID API calls to our backend
-                        const backendUrl = "' . esc_js($this->backend_url) . '";
+                        const backendUrl = "https://d-id-agent-1sdx.onrender.com";
                         const originalFetch = window.fetch;
                         window.fetch = function(url, options = {}) {
                             let newUrl = url;
