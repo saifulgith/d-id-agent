@@ -24,22 +24,8 @@ const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || '*';
 // Custom CORS function to handle origin matching more flexibly
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    // Allow exact match or with/without trailing slash
-    const allowedOrigins = [
-      'https://portdemy.com',
-      'https://portdemy.com/',
-      'http://localhost:3000',
-      'http://localhost:8080'
-    ];
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    // Allow all origins for now to test
+    callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
