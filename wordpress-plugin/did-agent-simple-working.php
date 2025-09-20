@@ -24,79 +24,93 @@ class DIDAgentSimpleWorking {
     }
     
     public function enqueue_scripts() {
-        // Load D-ID SDK directly
-        wp_enqueue_script('did-sdk', 'https://cdn.jsdelivr.net/npm/@d-id/client-sdk@latest/dist/index.js', array(), '1.0.0', true);
-        
-        // Configure and initialize
-        wp_add_inline_script('did-sdk', '
+        // Load D-ID SDK as ES module
+        wp_add_inline_script('jquery', '
             console.log("🚀 D-ID Agent Simple Working - Loading SDK");
             
-            // Wait for SDK to load
-            function waitForSDK() {
-                if (window.DID && window.DID.createAgentManager) {
-                    console.log("✅ D-ID SDK loaded successfully");
-                    initializeAgent();
-                } else {
-                    console.log("⏳ Waiting for D-ID SDK...");
-                    setTimeout(waitForSDK, 100);
-                }
-            }
-            
-            async function initializeAgent() {
-                try {
-                    console.log("🔑 Getting client key...");
-                    const response = await fetch("' . esc_js($this->backend_url) . '/api/client-key", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ capabilities: ["streaming", "ws"] })
-                    });
-                    
-                    const data = await response.json();
-                    const clientKey = data.client_key || data.clientKey;
-                    
-                    if (!clientKey) {
-                        throw new Error("No client key received");
-                    }
-                    
-                    console.log("✅ Client key received");
-                    
-                    // Create agent manager
-                    const agentManager = await window.DID.createAgentManager({
-                        agentId: "v2_agt_aKkqeO6X",
-                        container: document.getElementById("did-agent-container"),
-                        auth: {
-                            type: "key",
-                            clientKey: clientKey
-                        },
-                        onSrcObjectReady: (stream) => {
-                            console.log("📹 Video stream ready");
-                            document.getElementById("loading").style.display = "none";
-                        },
-                        onConnectionStateChange: (state) => {
-                            console.log("🔗 Connection state:", state);
-                            if (state === "connected") {
-                                console.log("✅ Agent connected!");
-                                agentManager.chat("Hello, how can I help you today?");
-                            }
-                        },
-                        onError: (error) => {
-                            console.error("❌ Agent error:", error);
+            // Load SDK as ES module
+            const script = document.createElement("script");
+            script.type = "module";
+            script.innerHTML = `
+                import * as sdk from "https://cdn.jsdelivr.net/npm/@d-id/client-sdk@latest/dist/index.js";
+                
+                // Make SDK available globally
+                window.DID = sdk;
+                window.createAgentManager = sdk.createAgentManager;
+                
+                console.log("✅ D-ID SDK loaded successfully");
+                
+                // Initialize agent
+                initializeAgent();
+                
+                async function initializeAgent() {
+                    try {
+                        console.log("🔑 Getting client key...");
+                        const response = await fetch("' . esc_js($this->backend_url) . '/api/client-key", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ capabilities: ["streaming", "ws"] })
+                        });
+                        
+                        const data = await response.json();
+                        const clientKey = data.client_key || data.clientKey;
+                        
+                        if (!clientKey) {
+                            throw new Error("No client key received");
                         }
-                    });
-                    
-                    console.log("✅ Agent manager created successfully");
-                    
-                } catch (error) {
-                    console.error("❌ Failed to initialize agent:", error);
+                        
+                        console.log("✅ Client key received");
+                        
+                        // Create agent manager using official D-ID pattern
+                        const agentManager = await window.createAgentManager("v2_agt_aKkqeO6X", {
+                            auth: { type: "key", clientKey: clientKey },
+                            callbacks: {
+                                onSrcObjectReady: (stream) => {
+                                    console.log("📹 Video stream ready");
+                                    const video = document.getElementById("did-agent-container").querySelector("video");
+                                    if (video) {
+                                        video.srcObject = stream;
+                                    } else {
+                                        // Create video element
+                                        const videoElement = document.createElement("video");
+                                        videoElement.srcObject = stream;
+                                        videoElement.autoplay = true;
+                                        videoElement.playsInline = true;
+                                        videoElement.muted = true;
+                                        videoElement.style.width = "100%";
+                                        videoElement.style.height = "100%";
+                                        videoElement.style.objectFit = "cover";
+                                        document.getElementById("did-agent-container").appendChild(videoElement);
+                                    }
+                                    document.getElementById("loading").style.display = "none";
+                                },
+                                onVideoStateChange: (state) => {
+                                    console.log("📹 Video state:", state);
+                                },
+                                onConnectionStateChange: (state) => {
+                                    console.log("🔗 Connection state:", state);
+                                    if (state === "connected") {
+                                        console.log("✅ Agent connected!");
+                                        agentManager.chat("Hello, how can I help you today?");
+                                    }
+                                },
+                                onNewMessage: (messages, type) => {
+                                    console.log("💬 New message:", messages, type);
+                                },
+                                onError: (error, errorData) => {
+                                    console.error("❌ Agent error:", error, errorData);
+                                }
+                            }
+                        });
+                        
+                        console.log("✅ Agent manager created successfully");
+                        
+                    } catch (error) {
+                        console.error("❌ Failed to initialize agent:", error);
+                    }
                 }
-            }
-            
-            // Start when DOM is ready
-            if (document.readyState === "loading") {
-                document.addEventListener("DOMContentLoaded", waitForSDK);
-            } else {
-                waitForSDK();
-            }
+            `;
+            document.head.appendChild(script);
         ');
     }
     
