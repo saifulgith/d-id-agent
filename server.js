@@ -29,7 +29,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Client-Key'],
   optionsSuccessStatus: 200
 };
 
@@ -177,6 +177,18 @@ app.post('/client-key', async (req, res) => {
     
     res.json(tempClientKey);
   }
+});
+
+// Handle OPTIONS requests for agent endpoint (CORS preflight)
+app.options('/api/agents/:agentId', (req, res) => {
+  console.log('🔄 OPTIONS request for agent endpoint');
+  res.set({
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, Client-Key',
+    'Access-Control-Allow-Credentials': 'true'
+  });
+  res.status(200).end();
 });
 
 // Proxy for D-ID agent operations
