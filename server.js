@@ -186,6 +186,9 @@ app.get('/api/agents/:agentId', async (req, res) => {
   try {
     const { agentId } = req.params;
     console.log(`🔍 Getting agent details for: ${agentId}`);
+    console.log(`📥 Request headers:`, req.headers);
+    console.log(`📥 Request method:`, req.method);
+    console.log(`📥 Request URL:`, req.url);
     
     // Use server API key for backend calls to D-ID
     const authString = Buffer.from(DID_API_KEY).toString('base64');
