@@ -182,6 +182,7 @@ app.post('/client-key', async (req, res) => {
 // Handle OPTIONS requests for agent endpoint (CORS preflight)
 app.options('/api/agents/:agentId', (req, res) => {
   console.log('🔄 OPTIONS request for agent endpoint');
+  console.log('🔄 Request headers:', req.headers);
   res.set({
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
