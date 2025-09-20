@@ -48,16 +48,43 @@ class DIDAgentSimpleWorkingFixed {
                 async function initializeAgent() {
                     try {
                         console.log("🔑 Getting client key...");
-                        const response = await fetch("' . esc_js($this->backend_url) . '/api/client-key", {
+                        const backendUrl = "' . esc_js($this->backend_url) . '";
+                        console.log("🌐 Backend URL:", backendUrl);
+                        
+                        // Test backend connectivity first
+                        try {
+                            console.log("🔍 Testing backend connectivity...");
+                            const healthResponse = await fetch(backendUrl + "/", { method: "GET" });
+                            console.log("🏥 Backend health check status:", healthResponse.status);
+                        } catch (healthError) {
+                            console.error("❌ Backend not reachable:", healthError);
+                            throw new Error("Backend server is not reachable. Please check your backend URL in settings.");
+                        }
+                        
+                        const response = await fetch(backendUrl + "/api/client-key", {
                             method: "POST",
-                            headers: { "Content-Type": "application/json" },
+                            headers: { 
+                                "Content-Type": "application/json",
+                                "Accept": "application/json"
+                            },
                             body: JSON.stringify({ capabilities: ["streaming", "ws"] })
                         });
                         
+                        console.log("📡 Client key response status:", response.status);
+                        
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error("❌ Client key fetch failed:", response.status, response.statusText);
+                            console.error("❌ Error response:", errorText);
+                            throw new Error(`Client key fetch failed: ${response.status} ${response.statusText}`);
+                        }
+                        
                         const data = await response.json();
+                        console.log("📦 Client key response data:", data);
                         const clientKey = data.client_key || data.clientKey;
                         
                         if (!clientKey) {
+                            console.error("❌ No client key in response:", data);
                             throw new Error("No client key received");
                         }
                         
