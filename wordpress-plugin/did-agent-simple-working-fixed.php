@@ -67,8 +67,9 @@ class DIDAgentSimpleWorkingFixed {
                         const backendUrl = "' . esc_js($this->backend_url) . '";
                         const originalFetch = window.fetch;
                         window.fetch = function(url, options = {}) {
+                            let newUrl = url;
                             if (typeof url === "string" && url.includes("api.d-id.com")) {
-                                const newUrl = url.replace("https://api.d-id.com", backendUrl + "/api");
+                                newUrl = url.replace("https://api.d-id.com", backendUrl + "/api");
                                 console.log("🔄 Redirecting API call:", url, "->", newUrl);
                                 
                                 // Add client key to authorization header
@@ -76,7 +77,7 @@ class DIDAgentSimpleWorkingFixed {
                                 options.headers["Client-Key"] = clientKey;
                                 options.headers["Authorization"] = "Basic " + btoa(clientKey + ":");
                             }
-                            return originalFetch.call(this, newUrl || url, options);
+                            return originalFetch.call(this, newUrl, options);
                         };
                         
                         // Redirect WebSocket connections
