@@ -101,15 +101,21 @@ class DIDAgentWorkingFinal {
                         
                         // Create agent manager
                         console.log("🎨 Creating agent manager...");
+                        console.log("🎨 Using client key:", clientKey.substring(0, 10) + "...");
+                        
                         const agentManager = await window.createAgentManager("v2_agt_aKkqeO6X", {
                             auth: { type: "key", clientKey: clientKey },
                             callbacks: {
                                 onSrcObjectReady: (stream) => {
-                                    console.log("📹 Video stream ready");
+                                    console.log("📹 Video stream ready - stream:", stream);
+                                    console.log("📹 Stream tracks:", stream.getTracks());
+                                    
                                     const video = document.getElementById("did-agent-container").querySelector("video");
                                     if (video) {
+                                        console.log("📹 Using existing video element");
                                         video.srcObject = stream;
                                     } else {
+                                        console.log("📹 Creating new video element");
                                         const videoElement = document.createElement("video");
                                         videoElement.srcObject = stream;
                                         videoElement.autoplay = true;
@@ -121,25 +127,51 @@ class DIDAgentWorkingFinal {
                                         document.getElementById("did-agent-container").appendChild(videoElement);
                                     }
                                     document.getElementById("loading").style.display = "none";
+                                    console.log("📹 Video element setup complete");
                                 },
                                 onVideoStateChange: (state) => {
-                                    console.log("📹 Video state:", state);
+                                    console.log("📹 Video state changed:", state);
                                 },
                                 onConnectionStateChange: (state) => {
-                                    console.log("🔗 Connection state:", state);
+                                    console.log("🔗 Connection state changed:", state);
                                     if (state === "connected") {
-                                        console.log("✅ Agent connected!");
-                                        agentManager.chat("Hello, how can I help you today?");
+                                        console.log("✅ Agent connected! Sending greeting...");
+                                        setTimeout(() => {
+                                            agentManager.chat("Hello, how can I help you today?");
+                                        }, 1000);
+                                    } else if (state === "disconnected") {
+                                        console.log("❌ Agent disconnected");
+                                    } else if (state === "connecting") {
+                                        console.log("🔄 Agent connecting...");
                                     }
                                 },
                                 onNewMessage: (messages, type) => {
-                                    console.log("💬 New message:", messages, type);
+                                    console.log("💬 New message received:", messages, "Type:", type);
                                 },
                                 onError: (error, errorData) => {
-                                    console.error("❌ Agent error:", error, errorData);
+                                    console.error("❌ Agent error:", error);
+                                    console.error("❌ Error data:", errorData);
                                 }
                             }
                         });
+                        
+                        console.log("🎨 Agent manager created, waiting for connection...");
+                        
+                        // Try to trigger video after a delay
+                        setTimeout(() => {
+                            console.log("🔄 Attempting to trigger video...");
+                            const video = document.getElementById("did-agent-container").querySelector("video");
+                            if (video) {
+                                console.log("📹 Video element found, attempting to play...");
+                                video.play().then(() => {
+                                    console.log("✅ Video playing successfully");
+                                }).catch(err => {
+                                    console.log("❌ Video play failed:", err);
+                                });
+                            } else {
+                                console.log("📹 No video element found yet");
+                            }
+                        }, 5000);
                         
                         console.log("✅ Agent manager created successfully");
                         
