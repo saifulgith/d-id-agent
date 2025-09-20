@@ -103,6 +103,13 @@ class DIDAgentDebug {
                         });
                         
                         try {
+                            console.log("🧪 Starting agent endpoint request...");
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => {
+                                console.log("🧪 Request timeout after 10 seconds");
+                                controller.abort();
+                            }, 10000);
+                            
                             const agentResponse = await fetch(backendUrl + "/api/agents/v2_agt_aKkqeO6X", {
                                 method: "GET",
                                 headers: {
@@ -110,8 +117,11 @@ class DIDAgentDebug {
                                     "Accept": "application/json",
                                     "Client-Key": clientKey,
                                     "Authorization": "Basic " + btoa(clientKey + ":")
-                                }
+                                },
+                                signal: controller.signal
                             });
+                            
+                            clearTimeout(timeoutId);
                             
                             console.log("🧪 Agent endpoint response status:", agentResponse.status);
                             console.log("🧪 Agent endpoint response headers:", agentResponse.headers);

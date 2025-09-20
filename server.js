@@ -181,6 +181,12 @@ app.post('/client-key', async (req, res) => {
 
 // Proxy for D-ID agent operations
 app.get('/api/agents/:agentId', async (req, res) => {
+  // Set response timeout
+  res.setTimeout(15000, () => {
+    console.log(`⏰ Request timeout for agent: ${req.params.agentId}`);
+    res.status(408).json({ error: 'Request timeout' });
+  });
+  
   try {
     const { agentId } = req.params;
     console.log(`🔍 Getting agent details for: ${agentId}`);
@@ -200,7 +206,8 @@ app.get('/api/agents/:agentId', async (req, res) => {
       headers: {
         'Accept': 'application/json',
         'Authorization': `Basic ${authString}`
-      }
+      },
+      timeout: 10000 // 10 second timeout
     });
 
     console.log('✅ Agent details retrieved successfully');
