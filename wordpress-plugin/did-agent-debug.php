@@ -17,10 +17,12 @@ class DIDAgentDebug {
         add_action('init', array($this, 'init'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
         add_shortcode('did_agent_debug', array($this, 'render_agent_shortcode'));
+        add_action('admin_menu', array($this, 'add_admin_menu'));
+        add_action('admin_init', array($this, 'admin_init'));
     }
     
     public function init() {
-        $this->backend_url = 'https://d-id-agent-1sdx.onrender.com';
+        $this->backend_url = get_option('did_agent_backend_url', 'https://d-id-agent-1sdx.onrender.com');
     }
     
     public function enqueue_scripts() {
@@ -45,7 +47,7 @@ class DIDAgentDebug {
                 async function initializeAgent() {
                     try {
                         console.log("🔑 Getting client key...");
-                        const backendUrl = "https://d-id-agent-1sdx.onrender.com";
+                        const backendUrl = "' . esc_js($this->backend_url) . '";
                         
                         // Test backend connectivity first
                         console.log("🔍 Testing backend connectivity...");
@@ -167,6 +169,53 @@ class DIDAgentDebug {
         </div>
         <?php
         return ob_get_clean();
+    }
+    
+    public function add_admin_menu() {
+        add_options_page(
+            'D-ID Agent Debug Settings',
+            'D-ID Agent Debug',
+            'manage_options',
+            'did-agent-debug-settings',
+            array($this, 'admin_page')
+        );
+    }
+    
+    public function admin_init() {
+        register_setting('did_agent_debug_settings', 'did_agent_backend_url');
+    }
+    
+    public function admin_page() {
+        if (isset($_POST['submit'])) {
+            update_option('did_agent_backend_url', sanitize_text_field($_POST['backend_url']));
+            echo '<div class="notice notice-success"><p>Settings saved!</p></div>';
+        }
+        
+        $backend_url = get_option('did_agent_backend_url', 'https://d-id-agent-1sdx.onrender.com');
+        ?>
+        <div class="wrap">
+            <h1>D-ID Agent Debug Settings</h1>
+            <form method="post" action="">
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">Backend URL</th>
+                        <td>
+                            <input type="url" name="backend_url" value="<?php echo esc_attr($backend_url); ?>" class="regular-text" required />
+                            <p class="description">Enter your Render backend URL (e.g., https://your-app.onrender.com)</p>
+                        </td>
+                    </tr>
+                </table>
+                <?php submit_button(); ?>
+            </form>
+            
+            <h2>Usage</h2>
+            <p>Use the shortcode <code>[did_agent_debug]</code> to display the D-ID agent debug version on any page or post.</p>
+            
+            <h2>Current Configuration</h2>
+            <p><strong>Backend URL:</strong> <?php echo esc_html($backend_url); ?></p>
+            <p><strong>Agent ID:</strong> v2_agt_aKkqeO6X</p>
+        </div>
+        <?php
     }
 }
 
