@@ -63,6 +63,32 @@ class DIDAgentSimpleWorking {
                         
                         console.log("✅ Client key received");
                         
+                        // Redirect all D-ID API calls to our backend
+                        const originalFetch = window.fetch;
+                        window.fetch = function(url, options = {}) {
+                            if (typeof url === 'string' && url.includes('api.d-id.com')) {
+                                const newUrl = url.replace('https://api.d-id.com', "' . esc_js($this->backend_url) . '/api");
+                                console.log('🔄 Redirecting API call:', url, '->', newUrl);
+                                
+                                // Add client key to authorization header
+                                if (!options.headers) options.headers = {};
+                                options.headers['Client-Key'] = clientKey;
+                                options.headers['Authorization'] = 'Basic ' + btoa(clientKey + ':');
+                            }
+                            return originalFetch.call(this, newUrl || url, options);
+                        };
+                        
+                        // Redirect WebSocket connections
+                        const originalWebSocket = window.WebSocket;
+                        window.WebSocket = function(url, protocols) {
+                            if (url.includes('notifications.d-id.com')) {
+                                const newUrl = url.replace('wss://notifications.d-id.com', "' . esc_js($this->backend_url) . '".replace('https://', 'wss://') + '/api/notifications');
+                                console.log('🔄 Redirecting WebSocket:', url, '->', newUrl);
+                                return new originalWebSocket(newUrl, protocols);
+                            }
+                            return new originalWebSocket(url, protocols);
+                        };
+                        
                         // Create agent manager using official D-ID pattern
                         const agentManager = await window.createAgentManager("v2_agt_aKkqeO6X", {
                             auth: { type: "key", clientKey: clientKey },
