@@ -54,6 +54,15 @@ class DIDAgentDebug {
                         const healthResponse = await fetch(backendUrl + "/", { method: "GET" });
                         console.log("🏥 Backend health check status:", healthResponse.status);
                         
+                        // Test simple API endpoint
+                        console.log("🧪 Testing simple API endpoint...");
+                        const testResponse = await fetch(backendUrl + "/api/test", { method: "GET" });
+                        console.log("🧪 Test endpoint status:", testResponse.status);
+                        if (testResponse.ok) {
+                            const testData = await testResponse.json();
+                            console.log("🧪 Test endpoint data:", testData);
+                        }
+                        
                         const response = await fetch(backendUrl + "/api/client-key", {
                             method: "POST",
                             headers: { 

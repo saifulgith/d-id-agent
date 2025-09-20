@@ -69,6 +69,18 @@ app.get('/', (req, res) => {
   });
 });
 
+// Simple test endpoint
+app.get('/api/test', (req, res) => {
+  console.log('🧪 Test endpoint called');
+  console.log('🧪 Headers:', req.headers);
+  res.json({ 
+    status: 'OK', 
+    message: 'Test endpoint working',
+    headers: req.headers,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Get client key for frontend (secure server-side call) - both routes for compatibility
 app.post('/api/client-key', async (req, res) => {
   try {
@@ -175,6 +187,8 @@ app.get('/api/agents/:agentId', async (req, res) => {
     console.log(`📥 Request headers:`, req.headers);
     console.log(`📥 Request method:`, req.method);
     console.log(`📥 Request URL:`, req.url);
+    console.log(`📥 Request origin:`, req.headers.origin);
+    console.log(`📥 Request user-agent:`, req.headers['user-agent']);
     
     // Use server API key for backend calls to D-ID
     const authString = Buffer.from(DID_API_KEY).toString('base64');
